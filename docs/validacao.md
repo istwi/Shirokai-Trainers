@@ -51,3 +51,9 @@ Use um mundo de teste, Cobblemon 1.8.3 e clientes Minecraft 1.21.1 compatíveis.
 Cinco testes adicionais cobrem: recuperação do sorteio original após interrupção, encerramento ABORTED de sessão sem resultado, repetição de journal já aplicada, entrega adiada por falta de espaço e elegibilidade de recompensas garantidas. O build compila os seletores de Pokémon no inventário e os comandos de configuração parcial.
 
 A aceitação final dentro do Minecraft continua pendente e será executada com o usuário ao final, conforme solicitado. Os testes automatizados não substituem o teste de dois clientes, EasyNPC/LuckPerms, menus, interação e entrega real. Não declarar essas verificações como aprovadas antes da execução.
+
+## Regressão de início de batalha — 0.2.1
+
+O teste dedicado reproduziu o problema: `TrainerBattleActor` sem `EntityBackedBattleActor` não recebe Pokémon ativo no primeiro `SwitchInstruction` do Cobblemon 1.8.3. Com `EntityTrainerBattleActor`, os dois Pokémon foram enviados e a batalha real por IA terminou com vencedor. Resultado observado: `success=true`, `legacyMissingOpponent=true`, `fixedSpawnedBoth=true`. O harness adia as escolhas dos dois bots até o fim do tick para simular o tempo de escolha do jogador e evitar despacho prematuro em AI-versus-AI.
+
+A primeira tentativa do harness confirmou o envio mas não avançou por causa desse agendamento dos bots; foi corrigido apenas no módulo de teste e a regressão foi repetida com sucesso. Não foi declarado teste de interface com um cliente humano. A correção também inclui timeout de inicialização e ausência de novo cooldown em ABORTED.

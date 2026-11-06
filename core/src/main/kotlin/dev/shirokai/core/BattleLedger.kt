@@ -41,7 +41,9 @@ class BattleLedger(private val store: JsonStore, private val rewards: RewardEngi
                 else -> Unit
             }
             trainer.lastBattle = result.finished
-            trainer.cooldowns[session.difficulty.id] = Math.addExact(result.finished, Math.multiplyExact(session.difficulty.cooldownSeconds, 1000))
+            if (result.outcome != Outcome.ABORTED) {
+                trainer.cooldowns[session.difficulty.id] = Math.addExact(result.finished, Math.multiplyExact(session.difficulty.cooldownSeconds, 1000))
+            }
             result.deliveries.forEach { d ->
                 progress.deliveries.putIfAbsent(d.id, d)
                 val claim = progress.claims.getOrPut(d.rewardKey) { Claim() }

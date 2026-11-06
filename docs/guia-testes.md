@@ -1,10 +1,10 @@
-# Teste da pré-release 0.2.0
+# Teste da pré-release 0.2.1
 
 Este roteiro é para a aceitação final no jogo. Os passos abaixo ainda não foram marcados como aprovados.
 
 ## Instalação
 
-Servidor Minecraft 1.21.1, JDK 21, Fabric Loader >=0.17.2, Fabric API >=0.116.6+1.21.1, Fabric Language Kotlin >=1.13.6+kotlin.2.2.20 e Cobblemon **1.8.3+1.21.1**. Adicionar `shirokai-trainers-0.2.0.jar` ao diretório `mods/` do servidor. O Shirokai Trainers não precisa ser instalado nos clientes; eles precisam do Cobblemon compatível.
+Servidor Minecraft 1.21.1, JDK 21, Fabric Loader >=0.17.2, Fabric API >=0.116.6+1.21.1, Fabric Language Kotlin >=1.13.6+kotlin.2.2.20 e Cobblemon **1.8.3+1.21.1**. Adicionar `shirokai-trainers-0.2.1.jar` ao diretório `mods/` do servidor. O Shirokai Trainers não precisa ser instalado nos clientes; eles precisam do Cobblemon compatível.
 
 Para EasyNPC, conferir as dependências da versão escolhida. A branch 1.21.1 investigada exige Loader >=0.18.3 e Fabric API >=0.116.7+1.21.1. Não instalar Cobblemon Trainer Battle. Usar mundo e dados de teste; as versões anteriores estão preservadas nos backups de configuração.
 

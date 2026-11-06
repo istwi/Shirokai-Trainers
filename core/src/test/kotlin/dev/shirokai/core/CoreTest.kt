@@ -173,6 +173,7 @@ class CoreTest {
         val progress = store.loadPlayer(s.player)
         assertEquals(0, progress.trainers["brock"]?.wins)
         assertTrue(progress.deliveries.isEmpty())
+        assertTrue(progress.trainers.getValue("brock").cooldowns.isEmpty())
         assertEquals(Outcome.ABORTED, store.read(store.resolutionPath(s.id), BattleResolution::class.java)?.outcome)
     }
 

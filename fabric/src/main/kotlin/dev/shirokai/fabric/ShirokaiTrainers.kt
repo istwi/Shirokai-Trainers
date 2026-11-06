@@ -4,8 +4,6 @@ import com.cobblemon.mod.common.Cobblemon
 import com.cobblemon.mod.common.api.events.CobblemonEvents
 import com.cobblemon.mod.common.battles.*
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor
-import com.cobblemon.mod.common.battles.actor.TrainerBattleActor
-import com.cobblemon.mod.common.battles.ai.StrongBattleAI
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon
 import com.google.gson.GsonBuilder
 import dev.shirokai.core.*
@@ -28,6 +26,8 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.Entity
+import net.minecraft.world.entity.LivingEntity
+import net.minecraft.world.phys.Vec3
 import net.minecraft.world.item.ItemStack
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -48,6 +48,7 @@ class ShirokaiTrainers : ModInitializer {
     private val waitingBind = mutableMapOf<UUID, Pair<String, Long>>()
     private val confirmingBind = mutableMapOf<UUID, BindRequest>()
     private val recoveryEnds = mutableMapOf<UUID, Outcome>()
+    private val pendingStarts = mutableMapOf<UUID, Long>()
     private var snapshotTicks = 0
     data class Bindings(val npcs: MutableMap<UUID, String> = mutableMapOf())
     data class BindRequest(val trainer: String, val entity: UUID, val dimension: String, val expires: Long)
@@ -89,6 +90,21 @@ class ShirokaiTrainers : ModInitializer {
             runCatching { deliver(handler.player) }.onFailure { log.error("Falha ao recuperar entregas de {}", handler.player.uuid, it) }
         }
         ServerTickEvents.END_SERVER_TICK.register {
+            pendingStarts.toMap().forEach { (id, deadline) ->
+                val battle = BattleRegistry.getBattle(id)
+                if (battle == null || battle.ended) pendingStarts.remove(id)
+                else if (battle.started && battle.activePokemon.all { it.battlePokemon != null }) {
+                    pendingStarts.remove(id)
+                    log.info("Batalha pronta, ambos os lados inicializados: {}", id)
+                } else if (System.currentTimeMillis() > deadline) {
+                    pendingStarts.remove(id)
+                    val player = ledger.sessions[id]?.player?.let(server.playerList::getPlayer)
+                    log.error("Envio inicial de Pokémon não concluiu em 30s; abortando batalha {}", id)
+                    finish(id, Outcome.ABORTED)
+                    battle.stop()
+                    player?.sendSystemMessage(Component.literal("§cA batalha não conseguiu iniciar e foi encerrada sem recompensas ou novo cooldown. Informe o ID $id à staff."))
+                }
+            }
             if (++snapshotTicks >= 1200) {
                 snapshotTicks = 0; npcSnapshots.captureAll()
                 server.playerList.players.forEach { player ->
@@ -114,7 +130,7 @@ class ShirokaiTrainers : ModInitializer {
                 val trainer = bindings.npcs[entity.uuid] ?: return@UseEntityCallback InteractionResult.PASS
                 // Deliberately preserve normal EasyNPC dialogs, tools and actions.
                 if (!player.isShiftKeyDown || !player.mainHandItem.isEmpty) return@UseEntityCallback InteractionResult.PASS
-                challenge(player, trainer, null)
+                challenge(player, trainer, null, entity as? LivingEntity)
                 InteractionResult.SUCCESS
             } catch (e: Exception) {
                 player.sendSystemMessage(Component.literal("§c${e.message}")); InteractionResult.FAIL
@@ -186,7 +202,7 @@ class ShirokaiTrainers : ModInitializer {
         val gyms = trainers.values.count { it.gym && (progress.trainers[it.id]?.wins ?: 0) > 0 }
         return PlayerContext(player.uuid, player.scoreboardName, progress, scores, gyms) { Permissions.check(player, it, false) }
     }
-    fun challenge(player: ServerPlayer, id: String, difficultyId: String?) {
+    fun challenge(player: ServerPlayer, id: String, difficultyId: String?, clickedNpc: LivingEntity? = null) {
         require(player.isAlive && !player.isSpectator) { "Não é possível desafiar nesse estado" }
         val t = trainers[id] ?: error("Treinador inexistente")
         require(t.enabled) { "Treinador desativado" }
@@ -208,10 +224,23 @@ class ShirokaiTrainers : ModInitializer {
         require(team.any { it.health > 0 }) { "Você precisa de um Pokémon apto" }
         require(team.none { it.entity?.isBusy == true }) { "Pokémon ocupado" }
         val opponent = d.team.map { BattlePokemon.safeCopyOf(PokemonAdapter.create(it)) }
-        val actor = TrainerBattleActor(t.name, UUID.randomUUID(), opponent, StrongBattleAI(d.skill))
+        val nearbyNpc = clickedNpc ?: bindings.npcs.entries.asSequence().filter { it.value == id }
+            .mapNotNull { player.serverLevel().getEntity(it.key) as? LivingEntity }
+            .filter { it.isAlive && player.distanceToSqr(it) in 1.0..1024.0 }
+            .minByOrNull { player.distanceToSqr(it) }
+        val source = nearbyNpc?.takeIf { it.isAlive && it.level() == player.level() && player.distanceToSqr(it) >= 1.0 }
+        val horizontal = Vec3(player.lookAngle.x, 0.0, player.lookAngle.z).let {
+            if (it.lengthSqr() < 0.001) Vec3(0.0, 0.0, 1.0) else it.normalize()
+        }
+        val origin = source ?: EntityTrainerBattleActor.anchor(player.serverLevel(), player.position().add(horizontal.scale(8.0)))
+        val actor = EntityTrainerBattleActor(t.name, opponent, d.skill, origin, ownsSource = source == null)
         val format = BattleFormat.GEN_9_SINGLES.copy(ruleSet = BattleFormat.GEN_9_SINGLES.ruleSet + d.battleRules, adjustLevel = -1)
-        val result = BattleRegistry.startBattle(format, BattleSide(PlayerBattleActor(player.uuid, team)), BattleSide(actor))
+        val result = try {
+            BattleRegistry.startBattle(format, BattleSide(PlayerBattleActor(player.uuid, team)), BattleSide(actor))
+        } catch (e: Exception) { actor.cleanup(); throw e }
         result.ifSuccessful { battle ->
+            pendingStarts[battle.battleId] = System.currentTimeMillis() + 30000
+            battle.onEndHandlers.add { pendingStarts.remove(battle.battleId); actor.cleanup() }
             val session = BattleSession(battle.battleId, player.uuid, t, d, System.currentTimeMillis())
             try { ledger.reserve(session) } catch (e: Exception) { battle.end(); throw e }
             battle.onEndHandlers.add { ended -> server.execute {
@@ -224,8 +253,9 @@ class ShirokaiTrainers : ModInitializer {
             } }
             say(player, t, if (previous == null) "first" else "rematch")
             say(player, t, "start")
-            log.info("Batalha iniciada: {} jogador={} treinador={} dificuldade={}", session.id, player.uuid, t.id, d.id)
+            log.info("Batalha solicitada: {} jogador={} treinador={} dificuldade={} origem={}", session.id, player.uuid, t.id, d.id, origin.uuid)
         }.ifErrored { error ->
+            actor.cleanup()
             if (debug) log.debug("Falha ao iniciar batalha {}: {}", id, error)
             throw IllegalStateException("Cobblemon recusou a batalha; verifique equipes e disponibilidade")
         }

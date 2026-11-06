@@ -26,3 +26,24 @@ tasks.processResources {
     inputs.property("version", project.version)
     filesMatching("fabric.mod.json") { expand("version" to project.version) }
 }
+
+// Integration harness is a separate mod/source set and is never packaged in the release JAR.
+val smokeTest by sourceSets.creating {
+    compileClasspath += sourceSets.main.get().output + sourceSets.main.get().compileClasspath
+    runtimeClasspath += output + compileClasspath + sourceSets.main.get().runtimeClasspath
+}
+loom {
+    mods {
+        create("shirokai_trainers") { sourceSet(sourceSets.main.get()) }
+        if (gradle.startParameter.taskNames.any { it.substringAfterLast(':') == "runBattleSmoke" }) {
+            create("shirokai_battle_smoke") { sourceSet(smokeTest) }
+        }
+    }
+    runs {
+        create("battleSmoke") {
+            server()
+            source(smokeTest)
+            runDir("run-smoke")
+        }
+    }
+}

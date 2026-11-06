@@ -7,7 +7,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: release-v0.2.0
+  group: release-v0.2.1
   cancel-in-progress: false
 
 jobs:
@@ -29,17 +29,17 @@ jobs:
         run: |
           set -euo pipefail
           mkdir release-assets
-          cp fabric/build/libs/shirokai-trainers-0.2.0.jar release-assets/
-          cp docs/guia-testes.md release-assets/GUIA-TESTES-v0.2.0.md
-          cp docs/comandos-e-permissoes.md release-assets/COMANDOS-E-PERMISSOES-v0.2.0.md
+          cp fabric/build/libs/shirokai-trainers-0.2.1.jar release-assets/
+          cp docs/guia-testes.md release-assets/GUIA-TESTES-v0.2.1.md
+          cp docs/comandos-e-permissoes.md release-assets/COMANDOS-E-PERMISSOES-v0.2.1.md
           cd release-assets
-          sha256sum shirokai-trainers-0.2.0.jar > shirokai-trainers-0.2.0.jar.sha256
+          sha256sum shirokai-trainers-0.2.1.jar > shirokai-trainers-0.2.1.jar.sha256
       - name: Upload assets and publish prerelease
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          test "$(gh release view v0.2.0 --json isDraft --jq '.isDraft')" = true
-          gh release upload v0.2.0 release-assets/* --clobber
-          gh release edit v0.2.0 --target "$GITHUB_SHA" --title 'Shirokai Trainers 0.2.0 — testes finais' --notes-file docs/release-v0.2.0.md --draft=false --prerelease
+          test "$(gh release view v0.2.1 --json isDraft --jq '.isDraft')" = true
+          gh release upload v0.2.1 release-assets/* --clobber
+          gh release edit v0.2.1 --target "$GITHUB_SHA" --title 'Shirokai Trainers 0.2.1 — correção do início de batalha' --notes-file docs/release-v0.2.1.md --draft=false --prerelease

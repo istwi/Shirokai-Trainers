@@ -2,5 +2,7 @@
 build/
 **/build/
 run/
+run-smoke/
+.kotlin/
 .idea/
 *.iml

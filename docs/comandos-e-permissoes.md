@@ -1,8 +1,8 @@
-# Comandos e permissões — Shirokai Trainers 0.2.0
+# Comandos e permissões — Shirokai Trainers 0.2.1
 
 ## Instalar e começar
 
-Baixe o JAR na [Release v0.2.0](https://github.com/istwi/Shirokai-Trainers/releases/tag/v0.2.0) e coloque-o em `mods/` **do servidor**. Use Minecraft 1.21.1, Java 21, Fabric Loader >=0.17.2, Fabric API >=0.116.6+1.21.1, Fabric Language Kotlin >=1.13.6+kotlin.2.2.20 e Cobblemon **1.8.3+1.21.1**. Clientes precisam do Cobblemon compatível; não precisam do Shirokai Trainers.
+Baixe o JAR na [Release v0.2.1](https://github.com/istwi/Shirokai-Trainers/releases/tag/v0.2.1) e coloque-o em `mods/` **do servidor**. Use Minecraft 1.21.1, Java 21, Fabric Loader >=0.17.2, Fabric API >=0.116.6+1.21.1, Fabric Language Kotlin >=1.13.6+kotlin.2.2.20 e Cobblemon **1.8.3+1.21.1**. Clientes precisam do Cobblemon compatível; não precisam do Shirokai Trainers.
 
 EasyNPC e LuckPerms são opcionais. Verifique os requisitos próprios da versão EasyNPC escolhida; a revisão investigada requer Loader >=0.18.3 e Fabric API >=0.116.7+1.21.1. Não é necessário instalar Cobblemon Trainer Battle. Esta é uma pré-release para os [testes finais no jogo](guia-testes.md).
 

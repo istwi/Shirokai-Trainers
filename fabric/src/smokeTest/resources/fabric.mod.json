@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "shirokai_battle_smoke",
+  "version": "1.0.0",
+  "name": "Shirokai Battle Regression Harness",
+  "environment": "server",
+  "entrypoints": {"main": ["dev.shirokai.smoke.BattleSmokeTest"]},
+  "depends": {"shirokai_trainers": "*", "cobblemon": "*"}
+}

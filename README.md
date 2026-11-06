@@ -2,7 +2,7 @@
 
 Mod **server-side** para **Minecraft 1.21.1 / Fabric / Cobblemon 1.8.3**, implementado a partir de [requisitos-adicionais.md](docs/requisitos-adicionais.md), que é o prompt completo do projeto.
 
-**Links rápidos:** [baixar na Release](https://github.com/istwi/Shirokai-Trainers/releases/tag/v0.2.0) · [comandos e permissões](docs/comandos-e-permissoes.md) · [guia de testes](docs/guia-testes.md).
+**Links rápidos:** [baixar na Release](https://github.com/istwi/Shirokai-Trainers/releases/tag/v0.2.1) · [comandos e permissões](docs/comandos-e-permissoes.md) · [guia de testes](docs/guia-testes.md).
 
 **Em validação. Não é uma versão concluída para servidor público.** Os testes automatizados do núcleo e a compilação passaram; o roteiro de aceitação com clientes, batalhas completas e EasyNPC ainda precisa ser executado. Consulte [a investigação das APIs](docs/investigacao-apis.md) e [o roteiro de validação](docs/validacao.md).
 
@@ -15,7 +15,7 @@ Necessário **JDK 21** (incluindo `javac`).
 ./gradlew test :fabric:build
 ```
 
-O JAR instalável fica em `fabric/build/libs/shirokai-trainers-0.2.0.jar`. Requisitos de servidor: Fabric Loader >=0.17.2, Fabric API >=0.116.6+1.21.1, Fabric Language Kotlin >=1.13.6+kotlin.2.2.20 e Cobblemon **1.8.3+1.21.1**. A API de permissões e o núcleo são incluídos no JAR. Não instale Cobblemon Trainer Battle; ele não é uma dependência.
+O JAR instalável fica em `fabric/build/libs/shirokai-trainers-0.2.1.jar`. Requisitos de servidor: Fabric Loader >=0.17.2, Fabric API >=0.116.6+1.21.1, Fabric Language Kotlin >=1.13.6+kotlin.2.2.20 e Cobblemon **1.8.3+1.21.1**. A API de permissões e o núcleo são incluídos no JAR. Não instale Cobblemon Trainer Battle; ele não é uma dependência.
 
 Clientes precisam do Minecraft e Cobblemon compatíveis, **sem instalar Shirokai Trainers**. EasyNPC e LuckPerms são opcionais. A versão EasyNPC consultada exige loader/API mais recentes; confira a compatibilidade antes de adicioná-la.
 
@@ -155,3 +155,9 @@ Para requisitos, envie `scoreboard`, `previousVictories` e `objectives` completo
 Os comandos de recompensa usam o executor Minecraft com callback de resultado, contexto de dimensão/posição do participante e permissão do servidor. Falha ou resultado não confirmado fica para revisão. A validação de Ability agora exige que ela pertença à espécie/forma escolhida. O exportador Showdown converte o ID do item ao nome sem namespace, compatível com itens padrão desse formato; itens exclusivos de mods podem não existir no Pokémon Showdown externo.
 
 Downloads são distribuídos pelas Releases do GitHub. As versões anteriores à aceitação completa são pré-releases de teste, não uma declaração de validação dos 12 critérios do TXT.
+
+## Correção 0.2.1: envio inicial do adversário
+
+Corrigido o ator sem entidade que deixava o Pokémon adversário ausente no primeiro envio do Cobblemon 1.8.3. O desafio por `/trainer <id>` também funciona sem NPC: usa origem invisível temporária, não persistida, limpa ao encerrar. A inicialização é monitorada por até 30 segundos; se falhar, a sessão é abortada sem recompensas nem novo cooldown. Configurações e progresso existentes são preservados. Substitua o JAR antigo com o servidor parado e reinicie.
+
+Regressão de integração: `./gradlew :fabric:runBattleSmoke`, em mundo isolado `fabric/run-smoke/`, com EULA aceita pelo operador. O harness inicia e encerra seu próprio servidor, reproduz o ator antigo sem adversário ativo e verifica envio dos dois Pokémon e término de uma batalha por IA com o ator corrigido. Confira `fabric/run-smoke/battle-smoke-result.json`: a saída Gradle sozinha não basta, `success` precisa ser `true`. O módulo de teste não integra o JAR de produção e não equivale a um teste da interface com cliente.
