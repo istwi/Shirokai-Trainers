@@ -2,6 +2,8 @@
 
 Mod **server-side** para **Minecraft 1.21.1 / Fabric / Cobblemon 1.8.3**, implementado a partir de [requisitos-adicionais.md](docs/requisitos-adicionais.md), que é o prompt completo do projeto.
 
+**Links rápidos:** [baixar na Release](https://github.com/istwi/Shirokai-Trainers/releases/tag/v0.2.0) · [comandos e permissões](docs/comandos-e-permissoes.md) · [guia de testes](docs/guia-testes.md).
+
 **Em validação. Não é uma versão concluída para servidor público.** Os testes automatizados do núcleo e a compilação passaram; o roteiro de aceitação com clientes, batalhas completas e EasyNPC ainda precisa ser executado. Consulte [a investigação das APIs](docs/investigacao-apis.md) e [o roteiro de validação](docs/validacao.md).
 
 ## Compilar
