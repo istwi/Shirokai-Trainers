@@ -33,6 +33,12 @@ data class Requirements(
     val gyms: Int = 0,
     val objectives: Set<String> = emptySet()
 ) {
+    fun validate() {
+        require(permission == null || permission.isNotBlank())
+        require(scoreboard.keys.all { it.isNotBlank() } && scoreboard.values.all { it >= 0 })
+        require(previousVictories.keys.all(::validId) && previousVictories.values.all { it >= 0 })
+        require(gyms >= 0 && objectives.all(::validId))
+    }
     fun missing(context: PlayerContext): String? = when {
         permission != null && !context.hasPermission(permission) -> "Permissão necessária: $permission"
         scoreboard.any { (k, v) -> (context.scores[k] ?: Int.MIN_VALUE) < v } -> "Scoreboard necessário: ${scoreboard.filter { (k, v) -> (context.scores[k] ?: Int.MIN_VALUE) < v }}"
@@ -79,6 +85,7 @@ data class Reward(
         require(weight.isFinite() && weight > 0) { "Peso deve ser positivo" }
         require(amount in 1..2304 && cooldown_seconds in 0..315360000 && max_claims_per_player >= 0)
         require(value.isNotBlank())
+        Requirements(required_permission, required_scoreboard, required_previous_victories).validate()
         if (kind == RewardKind.COMMAND) CommandTemplate.validate(value)
     }
 }
@@ -113,6 +120,7 @@ data class Trainer(
         difficulties.forEach { d ->
             require(validId(d.id) && d.team.size <= 6 && d.cooldownSeconds in 0..315360000 && d.skill in 0..5)
             d.team.forEach { it.validate() }
+            d.requirements.validate()
             val groups = d.winRewards + d.lossRewards
             require(groups.map { it.id }.distinct().size == groups.size) { "IDs de grupo duplicados" }
             groups.forEach { g ->
@@ -166,7 +174,7 @@ data class PlayerProgress(
     val objectives: MutableSet<String> = mutableSetOf(),
     val schemaVersion: Int = 1
 )
-enum class BattleState { RUNNING, RESULT_CONFIRMED }
+enum class BattleState { RUNNING, RESULT_CONFIRMED, COMPLETED }
 data class BattleSession(
     val id: UUID,
     val player: UUID,
@@ -176,3 +184,14 @@ data class BattleSession(
     var outcome: Outcome? = null,
     var state: BattleState = BattleState.RUNNING
 )
+
+data class BattleResolution(
+    val battle: BattleSession,
+    val outcome: Outcome,
+    val finished: Long,
+    val deliveries: List<Delivery>,
+    var applied: Boolean = false
+)
+
+/** A failure known to occur before any external effect; safe to retry automatically. */
+class DeliveryDeferred(message: String) : IllegalStateException(message)

@@ -147,4 +147,70 @@ class CoreTest {
         }
         assertTrue(StrictJson.parse("{\"a\": [1, true, null, \"text\"]}").isJsonObject)
     }
+
+    @Test fun `durable result recovers the exact original draw once after interruption`() {
+        val store = JsonStore(dir)
+        val p = PlayerProgress(UUID.randomUUID())
+        val s = session(p.uuid, listOf(RewardGroup("win", rewards = listOf(Reward("a", RewardKind.ITEM, "minecraft:stone")))))
+        val ledger = BattleLedger(store)
+        ledger.reserve(s)
+        val selected = RewardEngine(Random(12)).select(s, Outcome.WIN, context(p), 2000)
+        store.write(store.resolutionPath(s.id), BattleResolution(s, Outcome.WIN, 2000, selected))
+        val restored = BattleLedger(store)
+        assertTrue(restored.recover(3000) > 0)
+        val result = store.loadPlayer(p.uuid)
+        assertEquals(1, result.trainers["brock"]?.wins)
+        assertEquals(selected.map { it.id }, result.deliveries.keys.toList())
+        assertEquals(0, restored.recover(4000))
+        assertEquals(1, store.loadPlayer(p.uuid).claims.values.single().count)
+    }
+
+    @Test fun `running battle after crash is aborted without a fabricated victory`() {
+        val store = JsonStore(dir)
+        val s = session(UUID.randomUUID())
+        BattleLedger(store).reserve(s)
+        BattleLedger(store).recover(5000)
+        val progress = store.loadPlayer(s.player)
+        assertEquals(0, progress.trainers["brock"]?.wins)
+        assertTrue(progress.deliveries.isEmpty())
+        assertEquals(Outcome.ABORTED, store.read(store.resolutionPath(s.id), BattleResolution::class.java)?.outcome)
+    }
+
+    @Test fun `result already applied to player is not applied again if result journal write was interrupted`() {
+        val store = JsonStore(dir)
+        val p = PlayerProgress(UUID.randomUUID())
+        val s = session(p.uuid)
+        val ledger = BattleLedger(store)
+        ledger.reserve(s); ledger.finish(s.id, Outcome.WIN, context(p), 2000)
+        val result = store.read(store.resolutionPath(s.id), BattleResolution::class.java)!!
+        result.applied = false
+        store.write(store.resolutionPath(s.id), result)
+        BattleLedger(store).recover()
+        assertEquals(1, store.loadPlayer(p.uuid).trainers["brock"]?.wins)
+    }
+
+    @Test fun `lack of space defers delivery and later grants only once`() {
+        val store = JsonStore(dir)
+        val p = PlayerProgress(UUID.randomUUID())
+        val s = session(p.uuid, listOf(RewardGroup("win", rewards = listOf(Reward("a", RewardKind.ITEM, "minecraft:stone")))))
+        val ledger = BattleLedger(store)
+        ledger.reserve(s); ledger.finish(s.id, Outcome.WIN, context(p), 2000)
+        var granted = 0
+        ledger.deliver(p, { granted++ }, { _, _ -> }, { throw DeliveryDeferred("Sem espaço") })
+        assertEquals(0, granted)
+        assertEquals(DeliveryState.PENDING, store.loadPlayer(p.uuid).deliveries.values.single().state)
+        ledger.deliver(p, { granted++ }, { _, _ -> })
+        ledger.deliver(p, { granted++ }, { _, _ -> })
+        assertEquals(1, granted)
+    }
+
+    @Test fun `guaranteed plus random still respects eligibility and never invents loss rewards for flee`() {
+        val p = PlayerProgress(UUID.randomUUID())
+        val fixed = Reward("fixed", RewardKind.ITEM, "minecraft:stone", guaranteed = true, chance = 0.0)
+        val forbidden = fixed.copy(id = "forbidden", required_permission = "missing")
+        val s = session(p.uuid, listOf(RewardGroup("mixed", GroupMode.GUARANTEED_PLUS_RANDOM, listOf(fixed, forbidden))))
+        val engine = RewardEngine(Random(0))
+        assertEquals(listOf("fixed"), engine.select(s, Outcome.WIN, context(p), 2000).map { it.reward.id })
+        assertTrue(engine.select(s, Outcome.FLED, context(p), 2000).isEmpty())
+    }
 }

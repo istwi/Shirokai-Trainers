@@ -13,7 +13,7 @@ Necessário **JDK 21** (incluindo `javac`).
 ./gradlew test :fabric:build
 ```
 
-O JAR instalável fica em `fabric/build/libs/shirokai-trainers-0.1.0.jar`. Requisitos de servidor: Fabric Loader >=0.17.2, Fabric API >=0.116.6+1.21.1, Fabric Language Kotlin >=1.13.6+kotlin.2.2.20 e Cobblemon **1.8.3+1.21.1**. A API de permissões e o núcleo são incluídos no JAR. Não instale Cobblemon Trainer Battle; ele não é uma dependência.
+O JAR instalável fica em `fabric/build/libs/shirokai-trainers-0.2.0.jar`. Requisitos de servidor: Fabric Loader >=0.17.2, Fabric API >=0.116.6+1.21.1, Fabric Language Kotlin >=1.13.6+kotlin.2.2.20 e Cobblemon **1.8.3+1.21.1**. A API de permissões e o núcleo são incluídos no JAR. Não instale Cobblemon Trainer Battle; ele não é uma dependência.
 
 Clientes precisam do Minecraft e Cobblemon compatíveis, **sem instalar Shirokai Trainers**. EasyNPC e LuckPerms são opcionais. A versão EasyNPC consultada exige loader/API mais recentes; confira a compatibilidade antes de adicioná-la.
 
@@ -43,7 +43,7 @@ O diretório de desenvolvimento é `fabric/run/`, ignorado pelo Git. O servidor 
 
 Depois de `bind`, clique em uma entidade EasyNPC ou NPC do Cobblemon e confirme com `/traineradmin bindconfirm` em até 60 segundos. A associação é salva por UUID. Para desafiar um NPC associado, **agache e clique com a mão principal vazia**. O clique normal continua disponível para diálogos, ferramentas e ações do EasyNPC. O comando `/trainer brock` também funciona sem EasyNPC. UUIDs deixam de representar o mesmo NPC se ele for removido e recriado: vincule novamente.
 
-O menu permite adicionar/remover Pokémon, ajustar nível, Shiny, IVs e EVs, alternar dificuldades e configurar cooldown, IA, ginásio e simultaneidade. Espécie, forma, Nature, Ability, movimentos e item são editáveis pelo comando `pokemon`, com JSON, inteiramente dentro do jogo. Texto livre usa comandos, e não campos fictícios de inventário.
+O menu permite adicionar/remover Pokémon, escolher espécie, forma, Nature, Ability, movimentos e item em seletores paginados, ajustar nível, Shiny, IVs e EVs e copiar Pokémon para outra equipe. Também permite alternar dificuldades e configurar cooldown, IA, ginásio e simultaneidade. O comando `pokemon`, com JSON, continua disponível como alternativa. Texto livre usa comandos, e não campos fictícios de inventário.
 
 `pokemon` recebe um objeto Pokémon completo, aplicando defaults aos campos omitidos. `config` recebe uma configuração de treinador completa, obtida com `show`. Mudanças são validadas antes de salvar, incluindo consulta aos registros reais do Cobblemon, e criação de um Pokémon de validação. Equipes de jogadores não são substituídas ou niveladas pelo mod.
 
@@ -98,7 +98,7 @@ Recompensas são persistidas antes de efeitos externos, com ID derivado da batal
 /traineradmin delivery <uuid> <id_entrega> retry_confirm
 ```
 
-Use `retry_confirm` apenas após comprovar que a entrega não ocorreu; repetir comandos não idempotentes pode duplicar efeitos. Não se promete exactly-once para comandos externos arbitrários. Inventário/PC sem espaço gera registro para revisão, sem descartar itens no chão.
+Use `retry_confirm` apenas após comprovar que a entrega não ocorreu; repetir comandos não idempotentes pode duplicar efeitos. Não se promete exactly-once para comandos externos arbitrários. Inventário/PC sem espaço mantém a entrega em PENDING, sem efeitos parciais ou itens no chão. As pendências são tentadas ao conectar, a cada 1.200 ticks e com `/trainerclaim`. Erros depois de iniciar um efeito continuam exigindo revisão. `/trainerstatus` mostra vitórias, derrotas e contagens de pendências do próprio jogador, sem revelar comandos administrativos.
 
 ## Dados, recuperação e logs
 
@@ -121,7 +121,7 @@ O reload valida todo o conjunto antes de trocar a configuração ativa. Batalhas
 
 Além da persistência nativa das entidades no mundo Minecraft, o mod registra um snapshot dos NPCs vinculados em `npcs/<uuid>.json`: tipo de entidade, treinador, dimensão, coordenadas, rotação e NBT completo disponível pela API de salvamento da entidade. Esse NBT contém os dados que o próprio Cobblemon/EasyNPC expõe para salvamento, incluindo nome e aparência quando suportados pelo fornecedor.
 
-NPCs carregados são registrados ao vincular, a cada 1.200 ticks (aproximadamente um minuto) e no encerramento normal. Entidades Mob são marcadas persistentes. Para salvar imediatamente após editar/mover:
+NPCs carregados são registrados ao vincular, a cada 1.200 ticks (aproximadamente um minuto), no descarregamento da entidade e no encerramento normal. Entidades Mob são marcadas persistentes. Para salvar imediatamente após editar/mover:
 
 ```text
 /traineradmin npcsave
@@ -130,3 +130,26 @@ NPCs carregados são registrados ao vincular, a cada 1.200 ticks (aproximadament
 ```
 
 A restauração exige o mesmo NPC **já carregado**, mesmo UUID/tipo/vínculo, dimensão existente e nenhuma batalha do treinador em andamento. Antes de aplicar, o estado atual é arquivado em `npc-restore-backups/`. NPCs com passageiros/montarias não são restaurados até desmontar. A restauração pode mover o NPC para sua dimensão/posição salva, mas não cria entidades novas: chunk descarregado não é evidência de exclusão. Dados externos ao NBT, mantidos por outro mod em arquivos próprios, também precisam dos backups nativos desse mod. Faça backup do mundo junto com `config/`.
+
+## Novidades da versão 0.2.0
+
+Os diretórios `battles/` e `results/` guardam sessões e resultados confirmados, incluindo os sorteios. Na inicialização, resultados incompletos são aplicados de forma idempotente; sessões sem resultado confirmado viram ABORTED, sem inventar vitória. Uma falha de disco durante encerramento pode ser reprocessada com `/traineradmin retryresults` após corrigir o armazenamento, sem interferir em batalhas ainda ativas.
+
+Comandos de configuração parcial preservam os demais campos e rejeitam nomes de campo desconhecidos no objeto alterado:
+
+```text
+/traineradmin settings brock normal {"cooldownSeconds":60,"skill":4}
+/traineradmin requirements brock normal {"scoreboard":{"badge_points":2}}
+/traineradmin rewardgroup brock normal win fixas INDEPENDENT
+/traineradmin reward brock normal win fixas diamante {"kind":"ITEM","value":"minecraft:diamond","chance":100}
+/traineradmin rewardgroup brock normal win sorteio WEIGHTED_ONE
+/traineradmin reward brock normal win sorteio ouro {"kind":"ITEM","value":"minecraft:gold_ingot","weight":3}
+/traineradmin reward brock normal win sorteio esmeralda {"kind":"ITEM","value":"minecraft:emerald","weight":1}
+/traineradmin rewardremove brock normal win fixas diamante
+```
+
+Para requisitos, envie `scoreboard`, `previousVictories` e `objectives` completos quando alterar esses campos; cada mapa/lista informado substitui o anterior. JSONs longos podem vir de `buffer`. No modo `WEIGHTED_ONE`, `chance` é ignorada e os pesos relativos definem a seleção. IDs existentes de recompensas são preservados ao editar, mantendo seus limites individuais.
+
+Os comandos de recompensa usam o executor Minecraft com callback de resultado, contexto de dimensão/posição do participante e permissão do servidor. Falha ou resultado não confirmado fica para revisão. A validação de Ability agora exige que ela pertença à espécie/forma escolhida. O exportador Showdown converte o ID do item ao nome sem namespace, compatível com itens padrão desse formato; itens exclusivos de mods podem não existir no Pokémon Showdown externo.
+
+Downloads são distribuídos pelas Releases do GitHub. As versões anteriores à aceitação completa são pré-releases de teste, não uma declaração de validação dos 12 critérios do TXT.

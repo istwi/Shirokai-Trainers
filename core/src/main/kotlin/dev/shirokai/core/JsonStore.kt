@@ -59,6 +59,10 @@ class JsonStore(val root: Path, private val recovered: (Path, Exception) -> Unit
                 runCatching {
                     val previous = Files.readString(path)
                     require(StrictJson.parse(previous).isJsonObject)
+                    when (value) {
+                        is Trainer -> gson.fromJson(previous, Trainer::class.java).validate()
+                        is PlayerProgress -> require(gson.fromJson(previous, PlayerProgress::class.java).let { it.uuid == value.uuid && it.schemaVersion == 1 })
+                    }
                     Files.copy(path, path.resolveSibling(path.fileName.toString() + ".bak"), REPLACE_EXISTING)
                 }
             }
@@ -70,19 +74,29 @@ class JsonStore(val root: Path, private val recovered: (Path, Exception) -> Unit
     fun playerPath(id: UUID): Path = root.resolve("players/$id.json")
     fun saveTrainer(t: Trainer) { t.validate(); write(trainerPath(t.id), t) }
     fun savePlayer(p: PlayerProgress) = write(playerPath(p.uuid), p)
+    fun copyPlayer(p: PlayerProgress): PlayerProgress = gson.fromJson(gson.toJson(p), PlayerProgress::class.java)
     fun loadPlayer(id: UUID): PlayerProgress = read(playerPath(id), PlayerProgress::class.java) {
         require(it.uuid == id && it.schemaVersion == 1)
     } ?: PlayerProgress(id)
-    fun loadTrainers(): Map<String, Trainer> {
+    fun loadTrainers(validate: (Trainer) -> Unit = {}): Map<String, Trainer> {
         val directory = root.resolve("trainers")
         if (!Files.isDirectory(directory)) return emptyMap()
         return Files.list(directory).use { paths -> paths.filter { it.fileName.toString().endsWith(".json") }.toList() }
             .associate { path ->
-                val t = read(path, Trainer::class.java) { it.validate(); require(path.fileName.toString() == "${it.id}.json") }!!
+                val t = read(path, Trainer::class.java) { it.validate(); validate(it); require(path.fileName.toString() == "${it.id}.json") }!!
                 t.id to t
             }
     }
     fun resetPlayer(id: UUID) { savePlayer(PlayerProgress(id)) }
+    fun sessionPath(id: UUID) = root.resolve("battles/$id.json")
+    fun resolutionPath(id: UUID) = root.resolve("results/$id.json")
+    fun loadSessions(): List<BattleSession> = loadDirectory(root.resolve("battles"), BattleSession::class.java)
+    fun loadResolutions(): List<BattleResolution> = loadDirectory(root.resolve("results"), BattleResolution::class.java)
+    private fun <T> loadDirectory(directory: Path, type: Class<T>): List<T> {
+        if (!Files.isDirectory(directory)) return emptyList()
+        return Files.list(directory).use { paths -> paths.filter { it.fileName.toString().endsWith(".json") }.toList() }
+            .map { read(it, type)!! }
+    }
 }
 
 /** Gson's default parser accepts comments; consume tokens ourselves with leniency disabled. */

@@ -53,6 +53,8 @@ object PokemonAdapter {
         require(spec.form == null || (s.forms + s.standardForm).any { it.name.equals(spec.form, true) }) { "Forma inválida: ${spec.form}" }
         require(Natures.getNature(spec.nature) != null) { "Nature inválida: ${spec.nature}" }
         spec.ability?.let { require(Abilities.get(it) != null) { "Ability inválida: $it" } }
+        val form = spec.form?.let { name -> (s.forms + s.standardForm).first { it.name.equals(name, true) } } ?: s.standardForm
+        spec.ability?.let { ability -> require(form.abilities.any { it.template.name == ability }) { "Ability não disponível para essa espécie/forma: $ability" } }
         spec.moves.forEach { require(Moves.getByName(it) != null) { "Movimento inválido: $it" } }
         spec.heldItem?.let(::resolveItem)
     }

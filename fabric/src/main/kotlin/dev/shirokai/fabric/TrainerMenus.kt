@@ -14,9 +14,22 @@ import net.minecraft.world.inventory.MenuType
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
+import com.cobblemon.mod.common.api.pokemon.PokemonSpecies
+import com.cobblemon.mod.common.api.pokemon.Natures
+import com.cobblemon.mod.common.api.moves.Moves
+import net.minecraft.core.registries.BuiltInRegistries
 
 /** Vanilla chest screens; no client code or custom packets. All clicks are consumed. */
 class TrainerMenus(private val mod: ShirokaiTrainers) {
+    private fun choose(player: ServerPlayer, title: String, entries: List<Pair<String, String>>, back: () -> Unit, select: (String) -> Unit, page: Int = 0) {
+        val buttons = entries.drop(page * 45).take(45).mapIndexed { index, entry ->
+            index to Button(Items.PAPER, entry.second) { select(entry.first) }
+        }.toMap().toMutableMap()
+        if (page > 0) buttons[45] = Button(Items.ARROW, "Anterior") { choose(player, title, entries, back, select, page - 1) }
+        buttons[49] = Button(Items.BARRIER, "Voltar") { back() }
+        if (entries.size > (page + 1) * 45) buttons[53] = Button(Items.ARROW, "Próxima") { choose(player, title, entries, back, select, page + 1) }
+        open(player, title, buttons, true)
+    }
     private data class Button(val item: Item, val title: String, val click: (Int) -> Unit)
     private fun open(player: ServerPlayer, title: String, buttons: Map<Int, Button>, administrative: Boolean) {
         val inventory = SimpleContainer(54)
@@ -103,8 +116,14 @@ class TrainerMenus(private val mod: ShirokaiTrainers) {
             mod.save(updated, player.scoreboardName)
             if (spec == null) trainer(player, updated, d.id) else pokemon(player, updated, d, index)
         }
-        buttons[4] = Button(Items.EGG, "${p.species} / ${p.form ?: "padrão"}") {
-            player.closeContainer(); player.sendSystemMessage(Component.literal("/traineradmin pokemon ${t.id} ${d.id} ${index + 1} <JSON completo ou buffer>\n" + mod.gson.toJson(p)))
+        buttons[4] = Button(Items.EGG, "Espécie: ${p.species}") {
+            choose(player, "Escolher espécie", PokemonSpecies.implemented.sortedBy { it.name }.map { it.resourceIdentifier.toString() to it.name },
+                { pokemon(player, t, d, index) }, { save(p.copy(species = it, form = null, ability = null)) })
+        }
+        buttons[5] = Button(Items.ENDER_PEARL, "Forma: ${p.form ?: "padrão"}") {
+            val species = PokemonAdapter.species(p)
+            choose(player, "Escolher forma", listOf("" to "Padrão") + species.forms.map { it.name to it.name },
+                { pokemon(player, t, d, index) }, { save(p.copy(form = it.takeIf(String::isNotBlank), ability = null)) })
         }
         buttons[10] = Button(Items.EXPERIENCE_BOTTLE, "Nível ${p.level} (±1)") { save(p.copy(level = (p.level + if (it == 0) 1 else -1).coerceIn(1, 100))) }
         buttons[11] = Button(Items.NETHER_STAR, "Shiny: ${p.shiny}") { save(p.copy(shiny = !p.shiny)) }
@@ -116,8 +135,40 @@ class TrainerMenus(private val mod: ShirokaiTrainers) {
                 save(p.copy(evs = p.evs + (stat to ((p.evs[stat] ?: 0) + if (button == 0) 1 else -1).coerceIn(0, 252))))
             }
         }
-        buttons[37] = Button(Items.WRITABLE_BOOK, "Nature: ${p.nature}; Ability: ${p.ability ?: "auto"}; movimentos/item: editar JSON") {
-            player.closeContainer(); player.sendSystemMessage(Component.literal("/traineradmin pokemon ${t.id} ${d.id} ${index + 1} <JSON completo ou buffer>\n" + mod.gson.toJson(p)))
+        buttons[12] = Button(Items.BOOK, "Nature: ${p.nature}") {
+            choose(player, "Nature", Natures.all().map { it.name.path to it.name.path }.sortedBy { it.first },
+                { pokemon(player, t, d, index) }, { save(p.copy(nature = it)) })
+        }
+        buttons[13] = Button(Items.BLAZE_POWDER, "Ability: ${p.ability ?: "automática"}") {
+            val species = PokemonAdapter.species(p)
+            val form = p.form?.let { name -> species.forms.firstOrNull { it.name.equals(name, true) } } ?: species.standardForm
+            choose(player, "Ability", listOf("" to "Automática") + form.abilities.map { it.template.name to it.template.name }.distinct(),
+                { pokemon(player, t, d, index) }, { save(p.copy(ability = it.takeIf(String::isNotBlank))) })
+        }
+        buttons[14] = Button(Items.CHEST, "Item: ${p.heldItem ?: "nenhum"}") {
+            choose(player, "Item equipado", listOf("" to "Nenhum") + BuiltInRegistries.ITEM.keySet().filter { it.path != "air" }.sortedBy { it.toString() }.map { it.toString() to it.toString() },
+                { pokemon(player, t, d, index) }, { save(p.copy(heldItem = it.takeIf(String::isNotBlank))) })
+        }
+        for (moveSlot in 0..3) buttons[37 + moveSlot] = Button(Items.IRON_SWORD, "Movimento ${moveSlot + 1}: ${p.moves.getOrNull(moveSlot) ?: "vazio"}") {
+            choose(player, "Movimento ${moveSlot + 1}", listOf("" to "Remover") + Moves.names().sorted().map { it to it },
+                { pokemon(player, t, d, index) }, { selected ->
+                    val moves = p.moves.toMutableList()
+                    if (selected.isBlank()) {
+                        require(moveSlot in moves.indices && moves.size > 1) { "Mantenha ao menos um movimento" }; moves.removeAt(moveSlot)
+                    } else if (moveSlot in moves.indices) moves[moveSlot] = selected else moves.add(selected)
+                    save(p.copy(moves = moves))
+                })
+        }
+        buttons[46] = Button(Items.PAPER, "Copiar para outra equipe") {
+            val choices = mod.trainers.values.flatMap { trainer -> trainer.difficulties.filter { it.team.size < 6 }.map { "${trainer.id}/${it.id}" to "${trainer.name} / ${it.id}" } }
+            choose(player, "Copiar Pokémon", choices, { pokemon(player, t, d, index) }, { selected ->
+                val (id, difficulty) = selected.split('/')
+                val destination = mod.trainers.getValue(id)
+                mod.save(destination.copy(difficulties = destination.difficulties.map {
+                    if (it.id == difficulty) it.copy(team = it.team + p.copy(ivs = p.ivs.toMap(), evs = p.evs.toMap(), moves = p.moves.toList())) else it
+                }), player.scoreboardName)
+                trainer(player, mod.trainers.getValue(t.id), d.id)
+            })
         }
         buttons[43] = Button(Items.BARRIER, "Remover Pokémon") { save(null) }
         buttons[49] = Button(Items.ARROW, "Voltar") { trainer(player, t, d.id) }

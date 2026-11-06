@@ -15,6 +15,17 @@ class TrainerCommands(private val mod: ShirokaiTrainers) {
     private val inputs = mutableMapOf<UUID, Input>()
     fun register(dispatcher: CommandDispatcher<CommandSourceStack>) {
         ServerPlayConnectionEvents.DISCONNECT.register { handler, _ -> inputs.remove(handler.player.uuid) }
+        dispatcher.register(literal("trainerclaim").executes { ctx -> protect(ctx.source) {
+            mod.deliver(ctx.source.playerOrException)
+            ctx.source.sendSystemMessage(Component.literal("Recompensas pendentes processadas.")); 1
+        } })
+        dispatcher.register(literal("trainerstatus").executes { ctx -> protect(ctx.source) {
+            val p = mod.store.loadPlayer(ctx.source.playerOrException.uuid)
+            val summary = p.trainers.entries.sortedBy { it.key }.joinToString("\n") { (id, data) -> "$id: ${data.wins} vitórias, ${data.losses} derrotas" }
+            val pending = p.deliveries.values.count { it.state == DeliveryState.PENDING }
+            val review = p.deliveries.values.count { it.state in setOf(DeliveryState.NEEDS_REVIEW, DeliveryState.IN_FLIGHT) }
+            ctx.source.sendSystemMessage(Component.literal("${summary.ifEmpty { "Nenhuma batalha registrada." }}\nRecompensas pendentes: $pending; revisão administrativa: $review")); 1
+        } })
         dispatcher.register(literal("trainer")
             .executes { ctx -> protect(ctx.source) { TrainerMenus(mod).list(ctx.source.playerOrException); 1 } }
             .then(argument("trainer", StringArgumentType.word())
@@ -128,6 +139,51 @@ class TrainerCommands(private val mod: ShirokaiTrainers) {
                 require(t.difficulties.none { it.id == difficulty })
                 mod.save(t.copy(difficulties = t.difficulties + Difficulty(id = difficulty)), actor)
             }
+            "settings" -> {
+                val (id, difficulty, json) = parts(text, 3)
+                updateDifficulty(id, difficulty) { d -> merge(d, if (json == "buffer") buffer() else json, Difficulty::class.java).also { require(it.id == d.id) } }
+            }
+            "requirements" -> {
+                val (id, difficulty, json) = parts(text, 3)
+                updateDifficulty(id, difficulty) { it.copy(requirements = merge(it.requirements, if (json == "buffer") buffer() else json, Requirements::class.java)) }
+            }
+            "rewardgroup" -> {
+                val (id, difficulty, outcome, groupId, mode) = parts(text, 5)
+                require(outcome in setOf("win", "loss"))
+                updateDifficulty(id, difficulty) { d ->
+                    val groups = if (outcome == "win") d.winRewards else d.lossRewards
+                    val updated = if (groups.any { it.id == groupId }) groups.map { if (it.id == groupId) it.copy(mode = GroupMode.valueOf(mode.uppercase())) else it }
+                        else groups + RewardGroup(groupId, GroupMode.valueOf(mode.uppercase()))
+                    if (outcome == "win") d.copy(winRewards = updated) else d.copy(lossRewards = updated)
+                }
+            }
+            "reward" -> {
+                val values = parts(text, 6)
+                val (id, difficulty, outcome, groupId, rewardId) = values
+                val json = values[5]
+                require(outcome in setOf("win", "loss"))
+                updateDifficulty(id, difficulty) { d ->
+                    val groups = if (outcome == "win") d.winRewards else d.lossRewards
+                    require(groups.any { it.id == groupId }) { "Crie o grupo com rewardgroup primeiro" }
+                    val updated = groups.map { group -> if (group.id != groupId) group else {
+                        val existing = group.rewards.firstOrNull { it.id == rewardId } ?: Reward(rewardId, RewardKind.ITEM, "minecraft:diamond")
+                        val reward = merge(existing, if (json == "buffer") buffer() else json, Reward::class.java)
+                        require(reward.id == rewardId)
+                        group.copy(rewards = group.rewards.filterNot { it.id == rewardId } + reward)
+                    } }
+                    if (outcome == "win") d.copy(winRewards = updated) else d.copy(lossRewards = updated)
+                }
+            }
+            "rewardremove" -> {
+                val (id, difficulty, outcome, groupId, rewardId) = parts(text, 5)
+                require(outcome in setOf("win", "loss"))
+                updateDifficulty(id, difficulty) { d ->
+                    val groups = (if (outcome == "win") d.winRewards else d.lossRewards).map {
+                        if (it.id == groupId) it.copy(rewards = it.rewards.filterNot { it.id == rewardId }) else it
+                    }
+                    if (outcome == "win") d.copy(winRewards = groups) else d.copy(lossRewards = groups)
+                }
+            }
             "dialogue" -> {
                 val (id, event, value) = parts(text, 3)
                 val t = trainer(id)
@@ -141,7 +197,7 @@ class TrainerCommands(private val mod: ShirokaiTrainers) {
             "export" -> {
                 val (id, difficulty) = parts(text, 2)
                 val team = trainer(id).difficulties.first { it.id == difficulty }.team
-                val result = Showdown.export(team) { p ->
+                val result = Showdown.export(team, itemLabel = { net.minecraft.resources.ResourceLocation.parse(PokemonAdapter.resolveItem(it)).path.replace('_', ' ') }) { p ->
                     val species = PokemonAdapter.species(p)
                     species.name + (p.form?.let { "-$it" } ?: "")
                 }
@@ -184,6 +240,7 @@ class TrainerCommands(private val mod: ShirokaiTrainers) {
                 val id = UUID.fromString(text.trim())
                 source.sendSystemMessage(Component.literal(mod.gson.toJson(mod.store.loadPlayer(id))))
             }
+            "claim" -> { mod.deliver(source.playerOrException); source.sendSystemMessage(Component.literal("Recompensas pendentes processadas; use /trainerstatus para consultar.")) }
             "reset" -> {
                 val (uuid, confirmation) = parts(text, 2)
                 val id = UUID.fromString(uuid)
@@ -214,16 +271,31 @@ class TrainerCommands(private val mod: ShirokaiTrainers) {
                 mod.server.playerList.getPlayer(progress.uuid)?.let(mod::deliver)
             }
             "reload" -> { mod.reload(); mod.audit(actor, "reload") }
+            "retryresults" -> {
+                mod.ledger.sessions.values.toList().filter { com.cobblemon.mod.common.battles.BattleRegistry.getBattle(it.id) == null }.forEach {
+                    val saved = mod.store.read(mod.store.resolutionPath(it.id), BattleResolution::class.java)
+                    mod.finish(it.id, saved?.outcome ?: Outcome.ABORTED)
+                }
+                mod.audit(actor, "retryresults")
+            }
             "debug" -> {
                 require(text in setOf("on", "off")); mod.debug = text == "on"
                 mod.audit(actor, "debug $text")
             }
             else -> error("Ação desconhecida")
         }
+        if (action !in setOf("help", "show", "data", "export", "input")) source.sendSystemMessage(Component.literal("§aOperação concluída."))
+    }
+    private fun <T> merge(base: T, text: String, type: Class<T>): T {
+        val json = com.google.gson.GsonBuilder().serializeNulls().create().toJsonTree(base).asJsonObject
+        val patch = StrictJson.parse(text).asJsonObject
+        require(patch.keySet().all { json.has(it) }) { "Campo desconhecido: ${patch.keySet() - json.keySet()}" }
+        patch.entrySet().forEach { json.add(it.key, it.value) }
+        return mod.gson.fromJson(json, type)
     }
     data class TeamTemplate(val team: List<PokemonSpec>)
     companion object {
-        val ACTIONS = listOf("help", "create", "edit", "name", "config", "show", "input", "team", "pokemon", "remove", "copy", "difficulty", "dialogue", "import", "export", "template", "bind", "bindconfirm", "npcsave", "npcrestore", "unbind", "data", "reset", "objective", "delivery", "reload", "debug")
+        val ACTIONS = listOf("help", "create", "edit", "name", "config", "show", "input", "team", "pokemon", "remove", "copy", "difficulty", "settings", "requirements", "rewardgroup", "reward", "rewardremove", "dialogue", "import", "export", "template", "bind", "bindconfirm", "npcsave", "npcrestore", "unbind", "data", "reset", "objective", "delivery", "claim", "reload", "retryresults", "debug")
         val HELP = """
             /trainer [id] [dificuldade] — menu ou batalha sem OP
             /traineradmin create <id> | edit <id> | name <id> <nome>
@@ -232,6 +304,10 @@ class TrainerCommands(private val mod: ShirokaiTrainers) {
             /traineradmin remove <id> <dificuldade> <slot>
             /traineradmin copy <origem> <dificuldade> <slot> <destino> <dificuldade>
             /traineradmin difficulty <id> <nova_dificuldade>
+            /traineradmin settings|requirements <id> <dificuldade> <JSON parcial|buffer>
+            /traineradmin rewardgroup <id> <dificuldade> win|loss <grupo> <modo>
+            /traineradmin reward <id> <dificuldade> win|loss <grupo> <recompensa> <JSON parcial|buffer>
+            /traineradmin rewardremove <id> <dificuldade> win|loss <grupo> <recompensa>
             /traineradmin dialogue <id> <evento> <linhas separadas por | ou buffer>
             /traineradmin input begin | append <linha ou <blank>> | clear
             /traineradmin import <id> <dificuldade> — lê buffer Showdown

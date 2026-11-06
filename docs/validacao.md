@@ -3,7 +3,7 @@
 ## Evidências automatizadas
 
 - `./gradlew test :fabric:build`: compilação e JAR remapeado.
-- 14 testes do núcleo: valores de Pokémon, chances extremas, distribuição por peso, primeira vitória, cooldowns/permissões/limites, sessões independentes, bloqueio de simultaneidade, repetição de resultado, entrega interrompida, reset individual, recuperação de JSON, JSON estrito, execução segura de templates e três verificações de intercâmbio Showdown.
+- 19 testes do núcleo: valores de Pokémon, chances extremas, distribuição por peso, primeira vitória, cooldowns/permissões/limites, sessões independentes, bloqueio de simultaneidade, repetição de resultado, entrega interrompida, reset individual, recuperação de JSON, JSON estrito, execução segura de templates e três verificações de intercâmbio Showdown.
 - JSON estrito rejeita chaves duplicadas, comentários, documentos adicionais e NaN.
 
 O ambiente de desenvolvimento usa ICU4J 71.1 no runtime porque o POM de desenvolvimento do Cobblemon 1.8.3 não inclui esse pré-requisito de seu GraalJS. O artefato de produção do Cobblemon fornece seu próprio runtime; não empacotar uma segunda cópia dele no Shirokai Trainers.
@@ -45,3 +45,9 @@ Use um mundo de teste, Cobblemon 1.8.3 e clientes Minecraft 1.21.1 compatíveis.
 - Intercâmbio Showdown cobre os campos do editor. Campos adicionais são rejeitados explicitamente.
 - Ao reiniciar abruptamente, o motor Cobblemon perde batalhas em andamento; elas não são retomadas. Não inferir vitória de uma sessão desaparecida.
 - Não há promessa de execução exatamente uma vez para comandos arbitrários; existe revisão explícita de entregas incertas.
+
+## Versão 0.2.0
+
+Cinco testes adicionais cobrem: recuperação do sorteio original após interrupção, encerramento ABORTED de sessão sem resultado, repetição de journal já aplicada, entrega adiada por falta de espaço e elegibilidade de recompensas garantidas. O build compila os seletores de Pokémon no inventário e os comandos de configuração parcial.
+
+A aceitação final dentro do Minecraft continua pendente e será executada com o usuário ao final, conforme solicitado. Os testes automatizados não substituem o teste de dois clientes, EasyNPC/LuckPerms, menus, interação e entrega real. Não declarar essas verificações como aprovadas antes da execução.

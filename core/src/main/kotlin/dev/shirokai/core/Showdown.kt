@@ -57,10 +57,10 @@ object Showdown {
         }
         return result
     }
-    fun export(team: List<PokemonSpec>, speciesLabel: (PokemonSpec) -> String = { it.species }): String = team.joinToString("\n\n") { p ->
+    fun export(team: List<PokemonSpec>, itemLabel: (String) -> String = { it }, speciesLabel: (PokemonSpec) -> String = { it.species }): String = team.joinToString("\n\n") { p ->
         p.validate()
         buildString {
-            append(speciesLabel(p)); p.heldItem?.let { append(" @ $it") }; append('\n')
+            append(speciesLabel(p)); p.heldItem?.let { append(" @ ${itemLabel(it)}") }; append('\n')
             p.ability?.let { append("Ability: $it\n") }
             append("Level: ${p.level}\n")
             if (p.shiny) append("Shiny: Yes\n")

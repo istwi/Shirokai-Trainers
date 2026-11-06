@@ -27,9 +27,10 @@ class NpcSnapshots(private val mod: ShirokaiTrainers) {
     )
     private fun path(uuid: UUID) = mod.store.root.resolve("npcs/$uuid.json")
     private fun find(uuid: UUID): Entity? = mod.server.allLevels.firstNotNullOfOrNull { it.getEntity(uuid) }
-    fun capture(uuid: UUID): Boolean {
+    fun capture(uuid: UUID, loadedEntity: Entity? = null): Boolean {
         val trainer = mod.bindings.npcs[uuid] ?: error("NPC não vinculado")
-        val entity = find(uuid) ?: return false // An unloaded entity is not a deleted entity.
+        val entity = loadedEntity ?: find(uuid) ?: return false // An unloaded entity is not a deleted entity.
+        require(entity.uuid == uuid)
         require(mod.isNpc(entity) && entity.isAlive)
         if (entity is Mob) entity.setPersistenceRequired()
         val tag = entity.saveWithoutId(CompoundTag())
@@ -57,6 +58,7 @@ class NpcSnapshots(private val mod: ShirokaiTrainers) {
         require(tag.hasUUID("UUID") && tag.getUUID("UUID") == uuid)
         require(!tag.contains("Passengers") && !entity.isPassenger && !entity.isVehicle) { "Desmonte NPC e passageiros antes de restaurar" }
         val before = entity.saveWithoutId(CompoundTag())
+        val originalLevel = entity.level() as net.minecraft.server.level.ServerLevel
         // Archive both the recovery snapshot and the live state before applying the recovery.
         mod.store.write(mod.store.root.resolve("npc-restore-backups/${uuid}-${UUID.randomUUID()}.json"),
             Snapshot(uuid, snapshot.trainer, snapshot.entityType, entity.level().dimension().location().toString(),
@@ -67,7 +69,14 @@ class NpcSnapshots(private val mod: ShirokaiTrainers) {
             find(uuid)?.let { if (it is Mob) it.setPersistenceRequired() }
             mod.audit(actor, "npcrestore $uuid ${snapshot.dimension} ${snapshot.x} ${snapshot.y} ${snapshot.z}")
         } catch (e: Exception) {
-            // No replacement entity is ever spawned. Preserve the backup for operator recovery.
+            runCatching {
+                // The original entity may have been replaced during a cross-dimension teleport.
+                val current = find(uuid) ?: entity
+                current.load(before)
+                current.teleportTo(originalLevel, before.getList("Pos", 6).getDouble(0),
+                    before.getList("Pos", 6).getDouble(1), before.getList("Pos", 6).getDouble(2), emptySet(),
+                    before.getList("Rotation", 5).getFloat(0), before.getList("Rotation", 5).getFloat(1))
+            }.onFailure { e.addSuppressed(it) }
             mod.log.error("Restauração de NPC {} falhou; estado anterior arquivado para recuperação", uuid, e)
             throw e
         }

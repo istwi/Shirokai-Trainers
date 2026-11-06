@@ -15,9 +15,11 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
 import net.fabricmc.fabric.api.event.player.UseEntityCallback
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.commands.CommandSourceStack
+import net.minecraft.commands.CommandResultCallback
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
@@ -45,18 +47,25 @@ class ShirokaiTrainers : ModInitializer {
     lateinit var server: MinecraftServer
     private val waitingBind = mutableMapOf<UUID, Pair<String, Long>>()
     private val confirmingBind = mutableMapOf<UUID, BindRequest>()
-    private val recoveryEnds = mutableSetOf<UUID>()
+    private val recoveryEnds = mutableMapOf<UUID, Outcome>()
     private var snapshotTicks = 0
     data class Bindings(val npcs: MutableMap<UUID, String> = mutableMapOf())
     data class BindRequest(val trainer: String, val entity: UUID, val dimension: String, val expires: Long)
 
     override fun onInitialize() {
-        ServerLifecycleEvents.SERVER_STARTED.register { s -> server = s; reload() }
+        ServerLifecycleEvents.SERVER_STARTED.register { s ->
+            server = s; reload()
+            log.info("Recuperação de batalhas: {} registros", ledger.recover())
+        }
         ServerLifecycleEvents.SERVER_STOPPING.register {
             npcSnapshots.captureAll()
             ledger.sessions.values.toList().forEach { finish(it.id, Outcome.ABORTED) }
         }
         CommandRegistrationCallback.EVENT.register { dispatcher, _, _ -> TrainerCommands(this).register(dispatcher) }
+        ServerEntityEvents.ENTITY_UNLOAD.register { entity, _ ->
+            if (entity.uuid in bindings.npcs && !entity.isRemoved) runCatching { npcSnapshots.capture(entity.uuid, entity) }
+                .onFailure { log.error("Falha ao salvar NPC descarregado {}", entity.uuid, it) }
+        }
         CobblemonEvents.BATTLE_VICTORY.subscribe { event ->
             if (::server.isInitialized) server.execute {
                 val session = ledger.sessions[event.battle.battleId] ?: return@execute
@@ -80,13 +89,19 @@ class ShirokaiTrainers : ModInitializer {
             runCatching { deliver(handler.player) }.onFailure { log.error("Falha ao recuperar entregas de {}", handler.player.uuid, it) }
         }
         ServerTickEvents.END_SERVER_TICK.register {
-            if (++snapshotTicks >= 1200) { snapshotTicks = 0; npcSnapshots.captureAll() }
-            val ended = recoveryEnds.toList(); recoveryEnds.clear()
-            ended.forEach { id -> if (id in ledger.sessions && BattleRegistry.getBattle(id) == null) finish(id, Outcome.ABORTED) }
+            if (++snapshotTicks >= 1200) {
+                snapshotTicks = 0; npcSnapshots.captureAll()
+                server.playerList.players.forEach { player ->
+                    runCatching { deliver(player) }.onFailure { log.error("Falha ao processar entregas pendentes de {}", player.uuid, it) }
+                }
+            }
+            val ended = recoveryEnds.toMap(); recoveryEnds.clear()
+            ended.forEach { (id, outcome) -> if (id in ledger.sessions && BattleRegistry.getBattle(id) == null) finish(id, outcome) }
         }
         UseEntityCallback.EVENT.register(UseEntityCallback { player, world, hand, entity, _ ->
             if (world.isClientSide || player !is ServerPlayer || hand != InteractionHand.MAIN_HAND) return@UseEntityCallback InteractionResult.PASS
             try {
+                require(player.distanceToSqr(entity) <= 64) { "Aproxime-se do NPC" }
                 val waiting = waitingBind[player.uuid]
                 if (waiting != null && admin(player.createCommandSourceStack())) {
                     waitingBind.remove(player.uuid)
@@ -158,8 +173,7 @@ class ShirokaiTrainers : ModInitializer {
     }
     fun reload() {
         // Load and validate the entire replacement before swapping any live configuration.
-        val loaded = store.loadTrainers()
-        loaded.values.forEach(::validate)
+        val loaded = store.loadTrainers(::validate)
         val nextBindings = store.read(store.root.resolve("bindings.json"), Bindings::class.java) ?: Bindings()
         require(nextBindings.npcs.values.all { it in loaded }) { "Vinculação para treinador inexistente" }
         trainers = loaded; bindings = nextBindings
@@ -173,6 +187,7 @@ class ShirokaiTrainers : ModInitializer {
         return PlayerContext(player.uuid, player.scoreboardName, progress, scores, gyms) { Permissions.check(player, it, false) }
     }
     fun challenge(player: ServerPlayer, id: String, difficultyId: String?) {
+        require(player.isAlive && !player.isSpectator) { "Não é possível desafiar nesse estado" }
         val t = trainers[id] ?: error("Treinador inexistente")
         require(t.enabled) { "Treinador desativado" }
         require(BattleRegistry.getBattleByParticipatingPlayer(player) == null) { "Você já está em batalha" }
@@ -198,8 +213,15 @@ class ShirokaiTrainers : ModInitializer {
         val result = BattleRegistry.startBattle(format, BattleSide(PlayerBattleActor(player.uuid, team)), BattleSide(actor))
         result.ifSuccessful { battle ->
             val session = BattleSession(battle.battleId, player.uuid, t, d, System.currentTimeMillis())
-            ledger.reserve(session)
-            battle.onEndHandlers.add { ended -> server.execute { recoveryEnds.add(ended.battleId) } }
+            try { ledger.reserve(session) } catch (e: Exception) { battle.end(); throw e }
+            battle.onEndHandlers.add { ended -> server.execute {
+                recoveryEnds[ended.battleId] = when {
+                    ended.fled -> Outcome.FLED
+                    ended.winners.any { it.uuid == player.uuid } -> Outcome.WIN
+                    ended.losers.any { it.uuid == player.uuid } -> Outcome.LOSS
+                    else -> Outcome.ABORTED
+                }
+            } }
             say(player, t, if (previous == null) "first" else "rematch")
             say(player, t, "start")
             log.info("Batalha iniciada: {} jogador={} treinador={} dificuldade={}", session.id, player.uuid, t.id, d.id)
@@ -232,13 +254,7 @@ class ShirokaiTrainers : ModInitializer {
                     val item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(PokemonAdapter.resolveItem(delivery.reward.value)))
                     var remaining = delivery.reward.amount
                     // Preflight all space. Do not partially grant a reward and retry it later.
-                    val capacity = (0 until player.inventory.containerSize).sumOf { slot ->
-                        if (slot >= 36) 0 else {
-                            val stack = player.inventory.getItem(slot)
-                            if (stack.isEmpty) item.defaultMaxStackSize else if (ItemStack.isSameItemSameComponents(stack, ItemStack(item))) (stack.maxStackSize - stack.count).coerceAtLeast(0) else 0
-                        }
-                    }
-                    require(capacity >= remaining) { "Inventário sem espaço; entrega requer revisão administrativa" }
+                    check(itemCapacity(player, item) >= remaining) { "Inventário mudou durante a entrega" }
                     while (remaining > 0) {
                         val amount = remaining.coerceAtMost(item.defaultMaxStackSize)
                         val stack = ItemStack(item, amount)
@@ -254,12 +270,35 @@ class ShirokaiTrainers : ModInitializer {
                     val command = CommandTemplate.render(delivery.reward.value, player.scoreboardName, player.uuid,
                         delivery.trainerId, delivery.trainerName, delivery.battleId)
                     log.info("Executando recompensa {}: {}", delivery.id, command)
+                    var succeeded = false
+                    var completed = false
+                    var failed = false
                     val source = server.createCommandSourceStack().withPermission(4).withSuppressedOutput()
-                    val result = server.commands.dispatcher.execute(command, source)
-                    check(result > 0) { "Comando retornou falha: $result" }
+                        .withLevel(player.serverLevel()).withPosition(player.position())
+                        .withCallback(CommandResultCallback { success, _ -> completed = true; succeeded = succeeded || success; failed = failed || !success })
+                    server.commands.performPrefixedCommand(source, command)
+                    check(completed && succeeded && !failed) { "Comando falhou ou não confirmou resultado completo" }
                 }
             }
-        }, { message, error -> if (error == null) log.info(message) else log.error(message, error) })
+        }, { message, error -> if (error == null) log.info(message) else log.error(message, error) }, { delivery ->
+            when (delivery.reward.kind) {
+                RewardKind.ITEM -> {
+                    val item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(PokemonAdapter.resolveItem(delivery.reward.value)))
+                    if (itemCapacity(player, item) < delivery.reward.amount) throw DeliveryDeferred("Inventário sem espaço")
+                }
+                RewardKind.POKEMON -> {
+                    if (Cobblemon.storage.getParty(player).getFirstAvailablePosition() == null && Cobblemon.storage.getPC(player).getFirstAvailablePosition() == null)
+                        throw DeliveryDeferred("Equipe e PC sem espaço")
+                }
+                else -> Unit
+            }
+        })
+    }
+    private fun itemCapacity(player: ServerPlayer, item: net.minecraft.world.item.Item): Int = (0 until 36).sumOf { slot ->
+        val stack = player.inventory.getItem(slot)
+        if (stack.isEmpty) item.defaultMaxStackSize
+        else if (ItemStack.isSameItemSameComponents(stack, ItemStack(item))) (stack.maxStackSize - stack.count).coerceAtLeast(0)
+        else 0
     }
     fun say(player: ServerPlayer, t: Trainer, key: String) {
         t.dialogues[key]?.forEach { player.sendSystemMessage(Component.literal(it.replace(Regex("&([0-9a-fk-orA-FK-OR])"), "§$1"))) }
