@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "shirokai_trainers",
+  "version": "${version}",
+  "name": "Shirokai Trainers",
+  "description": "Treinadores configuráveis com batalhas reais do Cobblemon.",
+  "environment": "server",
+  "entrypoints": {"main": ["dev.shirokai.fabric.ShirokaiTrainers"]},
+  "depends": {
+    "fabricloader": ">=0.17.2",
+    "minecraft": "1.21.1",
+    "java": ">=21",
+    "fabric-api": "*",
+    "fabric-language-kotlin": ">=1.13.6+kotlin.2.2.20",
+    "cobblemon": "1.8.3+1.21.1"
+  }
+}
