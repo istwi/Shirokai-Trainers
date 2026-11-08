@@ -12,8 +12,6 @@ import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
-import net.fabricmc.fabric.api.event.player.UseEntityCallback
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.commands.CommandSourceStack
@@ -23,10 +21,6 @@ import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerPlayer
-import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
-import net.minecraft.world.entity.Entity
-import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.phys.Vec3
 import net.minecraft.world.item.ItemStack
 import org.slf4j.LoggerFactory
@@ -39,34 +33,22 @@ class ShirokaiTrainers : ModInitializer {
         log.error("JSON inválido preservado em {}; backup anterior carregado", path, error)
     }
     val ledger = BattleLedger(store)
-    val npcSnapshots = NpcSnapshots(this)
     var trainers: Map<String, Trainer> = emptyMap()
         private set
-    var bindings = Bindings()
     var debug = false
     lateinit var server: MinecraftServer
-    private val waitingBind = mutableMapOf<UUID, Pair<String, Long>>()
-    private val confirmingBind = mutableMapOf<UUID, BindRequest>()
     private val recoveryEnds = mutableMapOf<UUID, Outcome>()
     private val pendingStarts = mutableMapOf<UUID, Long>()
     private var snapshotTicks = 0
-    data class Bindings(val npcs: MutableMap<UUID, String> = mutableMapOf())
-    data class BindRequest(val trainer: String, val entity: UUID, val dimension: String, val expires: Long)
-
     override fun onInitialize() {
         ServerLifecycleEvents.SERVER_STARTED.register { s ->
             server = s; reload()
             log.info("Recuperação de batalhas: {} registros", ledger.recover())
         }
         ServerLifecycleEvents.SERVER_STOPPING.register {
-            npcSnapshots.captureAll()
             ledger.sessions.values.toList().forEach { finish(it.id, Outcome.ABORTED) }
         }
         CommandRegistrationCallback.EVENT.register { dispatcher, _, _ -> TrainerCommands(this).register(dispatcher) }
-        ServerEntityEvents.ENTITY_UNLOAD.register { entity, _ ->
-            if (entity.uuid in bindings.npcs && !entity.isRemoved) runCatching { npcSnapshots.capture(entity.uuid, entity) }
-                .onFailure { log.error("Falha ao salvar NPC descarregado {}", entity.uuid, it) }
-        }
         CobblemonEvents.BATTLE_VICTORY.subscribe { event ->
             if (::server.isInitialized) server.execute {
                 val session = ledger.sessions[event.battle.battleId] ?: return@execute
@@ -84,7 +66,6 @@ class ShirokaiTrainers : ModInitializer {
         ServerPlayConnectionEvents.DISCONNECT.register { handler, _ ->
             val sessions = ledger.sessions.values.filter { it.player == handler.player.uuid }
             sessions.forEach { finish(it.id, Outcome.DISCONNECTED); BattleRegistry.getBattle(it.id)?.end() }
-            waitingBind.remove(handler.player.uuid); confirmingBind.remove(handler.player.uuid)
         }
         ServerPlayConnectionEvents.JOIN.register { handler, _, _ ->
             runCatching { deliver(handler.player) }.onFailure { log.error("Falha ao recuperar entregas de {}", handler.player.uuid, it) }
@@ -106,7 +87,7 @@ class ShirokaiTrainers : ModInitializer {
                 }
             }
             if (++snapshotTicks >= 1200) {
-                snapshotTicks = 0; npcSnapshots.captureAll()
+                snapshotTicks = 0
                 server.playerList.players.forEach { player ->
                     runCatching { deliver(player) }.onFailure { log.error("Falha ao processar entregas pendentes de {}", player.uuid, it) }
                 }
@@ -114,52 +95,9 @@ class ShirokaiTrainers : ModInitializer {
             val ended = recoveryEnds.toMap(); recoveryEnds.clear()
             ended.forEach { (id, outcome) -> if (id in ledger.sessions && BattleRegistry.getBattle(id) == null) finish(id, outcome) }
         }
-        UseEntityCallback.EVENT.register(UseEntityCallback { player, world, hand, entity, _ ->
-            if (world.isClientSide || player !is ServerPlayer || hand != InteractionHand.MAIN_HAND) return@UseEntityCallback InteractionResult.PASS
-            try {
-                require(player.distanceToSqr(entity) <= 64) { "Aproxime-se do NPC" }
-                val waiting = waitingBind[player.uuid]
-                if (waiting != null && admin(player.createCommandSourceStack())) {
-                    waitingBind.remove(player.uuid)
-                    require(waiting.second > System.currentTimeMillis()) { "Vinculação expirou; execute bind novamente" }
-                    require(isNpc(entity)) { "Selecione uma entidade EasyNPC ou Cobblemon NPC" }
-                    confirmingBind[player.uuid] = BindRequest(waiting.first, entity.uuid, world.dimension().location().toString(), System.currentTimeMillis() + 60000)
-                    player.sendSystemMessage(Component.literal("Confirmar associação ${entity.uuid} → ${waiting.first}: /traineradmin bindconfirm"))
-                    return@UseEntityCallback InteractionResult.SUCCESS
-                }
-                val trainer = bindings.npcs[entity.uuid] ?: return@UseEntityCallback InteractionResult.PASS
-                // Deliberately preserve normal EasyNPC dialogs, tools and actions.
-                if (!player.isShiftKeyDown || !player.mainHandItem.isEmpty) return@UseEntityCallback InteractionResult.PASS
-                challenge(player, trainer, null, entity as? LivingEntity)
-                InteractionResult.SUCCESS
-            } catch (e: Exception) {
-                player.sendSystemMessage(Component.literal("§c${e.message}")); InteractionResult.FAIL
-            }
-        })
     }
 
     fun admin(source: CommandSourceStack): Boolean = Permissions.check(source, "shirokai.admin", 2)
-    fun isNpc(entity: Entity): Boolean {
-        val type = BuiltInRegistries.ENTITY_TYPE.getKey(entity.type)
-        return type.namespace == "easy_npc" || (type.namespace == "cobblemon" && type.path == "npc")
-    }
-    fun beginBind(player: ServerPlayer, trainer: String) {
-        require(trainer in trainers) { "Treinador inexistente" }
-        waitingBind[player.uuid] = trainer to System.currentTimeMillis() + 60000
-        confirmingBind.remove(player.uuid)
-    }
-    fun confirmBind(player: ServerPlayer) {
-        val request = confirmingBind.remove(player.uuid) ?: error("Clique em um NPC primeiro")
-        require(request.expires > System.currentTimeMillis()) { "Confirmação expirada" }
-        val entity = player.serverLevel().getEntity(request.entity) ?: error("NPC indisponível nesta dimensão")
-        require(player.level().dimension().location().toString() == request.dimension && isNpc(entity))
-        require(player.distanceToSqr(entity) <= 64) { "Aproxime-se do NPC" }
-        require(request.trainer in trainers)
-        bindings.npcs[request.entity] = request.trainer
-        store.write(store.root.resolve("bindings.json"), bindings)
-        npcSnapshots.capture(request.entity)
-        audit(player.scoreboardName, "bind ${request.entity} ${request.trainer}")
-    }
     fun validate(t: Trainer) {
         t.validate()
         t.difficulties.forEach { d ->
@@ -190,10 +128,8 @@ class ShirokaiTrainers : ModInitializer {
     fun reload() {
         // Load and validate the entire replacement before swapping any live configuration.
         val loaded = store.loadTrainers(::validate)
-        val nextBindings = store.read(store.root.resolve("bindings.json"), Bindings::class.java) ?: Bindings()
-        require(nextBindings.npcs.values.all { it in loaded }) { "Vinculação para treinador inexistente" }
-        trainers = loaded; bindings = nextBindings
-        log.info("Configuração carregada: {} treinadores, {} NPCs", trainers.size, bindings.npcs.size)
+        trainers = loaded
+        log.info("Configuração carregada: {} lutas", trainers.size)
     }
     fun context(player: ServerPlayer, progress: PlayerProgress = store.loadPlayer(player.uuid)): PlayerContext {
         val scores = server.scoreboard.objectives.mapNotNull { objective ->
@@ -202,7 +138,7 @@ class ShirokaiTrainers : ModInitializer {
         val gyms = trainers.values.count { it.gym && (progress.trainers[it.id]?.wins ?: 0) > 0 }
         return PlayerContext(player.uuid, player.scoreboardName, progress, scores, gyms) { Permissions.check(player, it, false) }
     }
-    fun challenge(player: ServerPlayer, id: String, difficultyId: String?, clickedNpc: LivingEntity? = null) {
+    fun challenge(player: ServerPlayer, id: String, difficultyId: String?) {
         require(player.isAlive && !player.isSpectator) { "Não é possível desafiar nesse estado" }
         val t = trainers[id] ?: error("Treinador inexistente")
         require(t.enabled) { "Treinador desativado" }
@@ -224,16 +160,11 @@ class ShirokaiTrainers : ModInitializer {
         require(team.any { it.health > 0 }) { "Você precisa de um Pokémon apto" }
         require(team.none { it.entity?.isBusy == true }) { "Pokémon ocupado" }
         val opponent = d.team.map { BattlePokemon.safeCopyOf(PokemonAdapter.create(it)) }
-        val nearbyNpc = clickedNpc ?: bindings.npcs.entries.asSequence().filter { it.value == id }
-            .mapNotNull { player.serverLevel().getEntity(it.key) as? LivingEntity }
-            .filter { it.isAlive && player.distanceToSqr(it) in 1.0..1024.0 }
-            .minByOrNull { player.distanceToSqr(it) }
-        val source = nearbyNpc?.takeIf { it.isAlive && it.level() == player.level() && player.distanceToSqr(it) >= 1.0 }
         val horizontal = Vec3(player.lookAngle.x, 0.0, player.lookAngle.z).let {
             if (it.lengthSqr() < 0.001) Vec3(0.0, 0.0, 1.0) else it.normalize()
         }
-        val origin = source ?: EntityTrainerBattleActor.anchor(player.serverLevel(), player.position().add(horizontal.scale(8.0)))
-        val actor = EntityTrainerBattleActor(t.name, opponent, d.skill, origin, ownsSource = source == null)
+        val origin = EntityTrainerBattleActor.anchor(player.serverLevel(), player.position().add(horizontal.scale(8.0)))
+        val actor = EntityTrainerBattleActor(t.name, opponent, d.skill, origin, ownsSource = true)
         val format = BattleFormat.GEN_9_SINGLES.copy(ruleSet = BattleFormat.GEN_9_SINGLES.ruleSet + d.battleRules, adjustLevel = -1)
         val result = try {
             BattleRegistry.startBattle(format, BattleSide(PlayerBattleActor(player.uuid, team)), BattleSide(actor))

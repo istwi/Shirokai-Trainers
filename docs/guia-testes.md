@@ -1,12 +1,12 @@
-# Teste da pré-release 0.2.1
+# Teste da pré-release 0.2.2
 
 Este roteiro é para a aceitação final no jogo. Os passos abaixo ainda não foram marcados como aprovados.
 
 ## Instalação
 
-Servidor Minecraft 1.21.1, JDK 21, Fabric Loader >=0.17.2, Fabric API >=0.116.6+1.21.1, Fabric Language Kotlin >=1.13.6+kotlin.2.2.20 e Cobblemon **1.8.3+1.21.1**. Adicionar `shirokai-trainers-0.2.1.jar` ao diretório `mods/` do servidor. O Shirokai Trainers não precisa ser instalado nos clientes; eles precisam do Cobblemon compatível.
+Servidor Minecraft 1.21.1, JDK 21, Fabric Loader >=0.17.2, Fabric API >=0.116.6+1.21.1, Fabric Language Kotlin >=1.13.6+kotlin.2.2.20 e Cobblemon **1.8.3+1.21.1**. Adicionar `shirokai-trainers-0.2.2.jar` ao diretório `mods/` do servidor. O Shirokai Trainers não precisa ser instalado nos clientes; eles precisam do Cobblemon compatível.
 
-Para EasyNPC, conferir as dependências da versão escolhida. A branch 1.21.1 investigada exige Loader >=0.18.3 e Fabric API >=0.116.7+1.21.1. Não instalar Cobblemon Trainer Battle. Usar mundo e dados de teste; as versões anteriores estão preservadas nos backups de configuração.
+EasyNPC é opcional e não é integrado pelo mod. Se usado, configure-o para executar como console/servidor o comando de batalha. Não instalar Cobblemon Trainer Battle. Usar mundo e dados de teste; as versões anteriores estão preservadas nos backups de configuração.
 
 ## 1. Criar e configurar
 
@@ -42,22 +42,15 @@ Testar também recompensas POKEMON e COMMAND, com `value` contendo respectivamen
 
 ## 3. Batalha e simultaneidade
 
-Com Pokémon aptos na equipe, um jogador **sem OP** executa `/trainer rocha`. Confirmar interface de batalha Cobblemon, equipe adversária definida, IA e resultado. Testar vitória, derrota, fuga e desconexão, relacionando os IDs nos logs.
+Com Pokémon aptos na equipe, execute como console/servidor `/traineradmin <jogador> battle rocha`. Confirmar interface de batalha Cobblemon, equipe adversária definida, IA e resultado. Testar vitória, derrota, fuga e desconexão, relacionando os IDs nos logs.
 
-Dois jogadores executam `/trainer rocha` simultaneamente. Cada um deve ter adversário independente; vencer uma batalha não deve encerrar a outra ou conceder recompensa ao participante errado. Em `/traineradmin edit rocha`, desativar simultaneidade e verificar bloqueio do segundo desafio. A equipe/níveis do jogador não podem mudar silenciosamente.
+Execute `/traineradmin <jogador> battle rocha` para dois jogadores ao mesmo tempo. Com `Simultâneas: true` no editor, cada um deve ter adversário independente, recompensa e cooldown próprios; vencer uma batalha não deve encerrar a outra ou conceder recompensa ao participante errado. Em `/traineradmin edit rocha`, desativar simultaneidade e verificar bloqueio do segundo desafio. A equipe/níveis do jogador não podem mudar silenciosamente.
 
-## 4. NPC e persistência
+## 4. Acionamento pelo EasyNPC
 
-Criar NPC pelo EasyNPC ou pelos comandos nativos do Cobblemon. Executar `/traineradmin bind rocha`, clicar e `/traineradmin bindconfirm`. O jogador deve agachar e clicar com a mão principal vazia para desafiar; clique normal e ferramentas do EasyNPC continuam suas próprias funções.
+Crie e configure o NPC inteiramente no EasyNPC. Na ação de clique desejada, configure execução como console/servidor com `traineradmin <jogador> battle rocha`, trocando `<jogador>` pelo placeholder suportado pela versão instalada. O EasyNPC deve manter seus próprios diálogos, aparência e persistência; o Shirokai Trainers não lê nem grava a entidade.
 
-```text
-/traineradmin npcsave
-/traineradmin npcrestore <uuid_npc> confirm
-```
-
-Salvar snapshot, mudar nome/aparência e mover a entidade; restaurar e conferir. Repetir em outra dimensão. Descarregar seu chunk não pode criar outra entidade nem apagar o registro. A restauração só trabalha sobre a entidade existente e carregada.
-
-Encerrar e reiniciar servidor. Conferir NPC, posição, nome/aparência, vinculação, equipes, vitórias, derrotas, cooldown e entregas. Resetar apenas um jogador com `/traineradmin reset <uuid> confirm`; os dados do segundo devem permanecer intactos. Os comandos de inspeção de dados e revisão são administrativos.
+Encerrar e reiniciar servidor. Conferir equipes, vitórias, derrotas, cooldown e entregas. Resetar apenas um jogador com `/traineradmin reset <uuid> confirm`; os dados do segundo devem permanecer intactos. Os comandos de inspeção de dados e revisão são administrativos.
 
 ## 5. Dificuldades, requisitos e intercâmbio
 

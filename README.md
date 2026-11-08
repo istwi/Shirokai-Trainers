@@ -2,7 +2,7 @@
 
 Mod **server-side** para **Minecraft 1.21.1 / Fabric / Cobblemon 1.8.3**, implementado a partir de [requisitos-adicionais.md](docs/requisitos-adicionais.md), que é o prompt completo do projeto.
 
-**Links rápidos:** [baixar na Release](https://github.com/istwi/Shirokai-Trainers/releases/tag/v0.2.1) · [comandos e permissões](docs/comandos-e-permissoes.md) · [guia de testes](docs/guia-testes.md).
+**Links rápidos:** [baixar na Release](https://github.com/istwi/Shirokai-Trainers/releases/tag/v0.2.2) · [comandos e permissões](docs/comandos-e-permissoes.md) · [guia de testes](docs/guia-testes.md).
 
 **Em validação. Não é uma versão concluída para servidor público.** Os testes automatizados do núcleo e a compilação passaram; o roteiro de aceitação com clientes, batalhas completas e EasyNPC ainda precisa ser executado. Consulte [a investigação das APIs](docs/investigacao-apis.md) e [o roteiro de validação](docs/validacao.md).
 
@@ -15,9 +15,9 @@ Necessário **JDK 21** (incluindo `javac`).
 ./gradlew test :fabric:build
 ```
 
-O JAR instalável fica em `fabric/build/libs/shirokai-trainers-0.2.1.jar`. Requisitos de servidor: Fabric Loader >=0.17.2, Fabric API >=0.116.6+1.21.1, Fabric Language Kotlin >=1.13.6+kotlin.2.2.20 e Cobblemon **1.8.3+1.21.1**. A API de permissões e o núcleo são incluídos no JAR. Não instale Cobblemon Trainer Battle; ele não é uma dependência.
+O JAR instalável fica em `fabric/build/libs/shirokai-trainers-0.2.2.jar`. Requisitos de servidor: Fabric Loader >=0.17.2, Fabric API >=0.116.6+1.21.1, Fabric Language Kotlin >=1.13.6+kotlin.2.2.20 e Cobblemon **1.8.3+1.21.1**. A API de permissões e o núcleo são incluídos no JAR. Não instale Cobblemon Trainer Battle; ele não é uma dependência.
 
-Clientes precisam do Minecraft e Cobblemon compatíveis, **sem instalar Shirokai Trainers**. EasyNPC e LuckPerms são opcionais. A versão EasyNPC consultada exige loader/API mais recentes; confira a compatibilidade antes de adicioná-la.
+Clientes precisam do Minecraft e Cobblemon compatíveis, **sem instalar Shirokai Trainers**. EasyNPC e LuckPerms são opcionais. O mod não integra nem cria NPCs: configure seu NPC e suas ações no EasyNPC separadamente.
 
 Use o checkout existente da tarefa em nuvem; não crie worktrees adicionais. Em redes gerenciadas, mantenha o proxy e configure as propriedades Java de proxy/CA conforme o ambiente; não desabilite TLS. O wrapper verifica o SHA-256 da distribuição Gradle.
 
@@ -31,7 +31,7 @@ O diretório de desenvolvimento é `fabric/run/`, ignorado pelo Git. O servidor 
 
 ## Administração dentro do Minecraft
 
-`/traineradmin` abre o menu administrativo. Requer `shirokai.admin`, com fallback para nível de permissão 2. LuckPerms pode fornecer essa permissão pela Fabric Permissions API. Jogadores comuns usam `/trainer` ou `/trainer <id> [dificuldade]`, sem OP.
+`/traineradmin` abre o menu administrativo. Requer `shirokai.admin`, com fallback para nível de permissão 2. LuckPerms pode fornecer essa permissão pela Fabric Permissions API. Jogadores não têm comando público para iniciar uma luta.
 
 ```text
 /traineradmin create brock
@@ -40,12 +40,11 @@ O diretório de desenvolvimento é `fabric/run/`, ignorado pelo Git. O servidor 
 /traineradmin team brock normal add
 /traineradmin pokemon brock normal 1 {"species":"geodude","level":15,"nature":"adamant","moves":["tackle","rockthrow"]}
 /traineradmin dialogue brock win &aMuito bem!|&eVolte para uma revanche.
-/traineradmin bind brock
 ```
 
-Depois de `bind`, clique em uma entidade EasyNPC ou NPC do Cobblemon e confirme com `/traineradmin bindconfirm` em até 60 segundos. A associação é salva por UUID. Para desafiar um NPC associado, **agache e clique com a mão principal vazia**. O clique normal continua disponível para diálogos, ferramentas e ações do EasyNPC. O comando `/trainer brock` também funciona sem EasyNPC. UUIDs deixam de representar o mesmo NPC se ele for removido e recriado: vincule novamente.
+Para iniciar a luta de um jogador, use como administrador ou console: `/traineradmin <jogador> battle <id_da_luta>`. Também é aceita a ordem `/traineradmin battle <jogador> <id_da_luta>`. Configure o EasyNPC para executar esse comando como console/servidor, substituindo `<jogador>` pelo jogador que clicou no NPC. O EasyNPC continua responsável pelo clique, diálogo e aparência; este mod apenas cria e executa a batalha normal do Cobblemon.
 
-O menu permite adicionar/remover Pokémon, escolher espécie, forma, Nature, Ability, movimentos e item em seletores paginados, ajustar nível, Shiny, IVs e EVs e copiar Pokémon para outra equipe. Também permite alternar dificuldades e configurar cooldown, IA, ginásio e simultaneidade. O comando `pokemon`, com JSON, continua disponível como alternativa. Texto livre usa comandos, e não campos fictícios de inventário.
+O menu permite adicionar/remover Pokémon, escolher espécie, forma, Nature, Ability, movimentos e item em seletores paginados, ajustar nível, Shiny, IVs e EVs e copiar Pokémon para outra equipe. Também permite alternar dificuldades e configurar cooldown, IA, ginásio e simultaneidade. **Simultâneas** vem ativado: cada execução do comando para jogadores diferentes cria uma batalha, recompensas e cooldown próprios. O comando `pokemon`, com JSON, continua disponível como alternativa. Texto livre usa comandos, e não campos fictícios de inventário.
 
 `pokemon` recebe um objeto Pokémon completo, aplicando defaults aos campos omitidos. `config` recebe uma configuração de treinador completa, obtida com `show`. Mudanças são validadas antes de salvar, incluindo consulta aos registros reais do Cobblemon, e criação de um Pokémon de validação. Equipes de jogadores não são substituídas ou niveladas pelo mod.
 
@@ -104,7 +103,7 @@ Use `retry_confirm` apenas após comprovar que a entrega não ocorreu; repetir c
 
 ## Dados, recuperação e logs
 
-Configurações e progresso ficam em `config/shirokai_trainers/`: `trainers/`, `players/`, `templates/` e `bindings.json`. Escritas usam arquivo temporário, fsync e substituição atômica. Versões anteriores são preservadas em `backups/` antes da substituição, sem exclusão automática. Isso requer uma política de arquivamento do operador para não ocupar o disco indefinidamente.
+Configurações e progresso ficam em `config/shirokai_trainers/`: `trainers/`, `players/` e `templates/`. Escritas usam arquivo temporário, fsync e substituição atômica. Versões anteriores são preservadas em `backups/` antes da substituição, sem exclusão automática. Isso requer uma política de arquivamento do operador para não ocupar o disco indefinidamente.
 
 JSON inválido é preservado e pode ser recuperado do `.bak`, com erro registrado. Se um arquivo não tiver backup válido, o carregamento falha em vez de apagar dados. `schemaVersion: 1` é a versão inicial; versões desconhecidas são rejeitadas. Não existe ainda migração de um formato anterior.
 
@@ -118,20 +117,6 @@ JSON inválido é preservado e pode ser recuperado do `.bak`, com erro registrad
 ```
 
 O reload valida todo o conjunto antes de trocar a configuração ativa. Batalhas em andamento usam sua configuração original. Reset é exclusivo do UUID informado, preserva backup e é recusado durante batalha ativa desse jogador. Logs normais cobrem batalhas, resultados, desconexões, entregas, comandos de recompensa e alterações administrativas; debug adiciona detalhes de falhas.
-
-## Configuração e localização dos NPCs
-
-Além da persistência nativa das entidades no mundo Minecraft, o mod registra um snapshot dos NPCs vinculados em `npcs/<uuid>.json`: tipo de entidade, treinador, dimensão, coordenadas, rotação e NBT completo disponível pela API de salvamento da entidade. Esse NBT contém os dados que o próprio Cobblemon/EasyNPC expõe para salvamento, incluindo nome e aparência quando suportados pelo fornecedor.
-
-NPCs carregados são registrados ao vincular, a cada 1.200 ticks (aproximadamente um minuto), no descarregamento da entidade e no encerramento normal. Entidades Mob são marcadas persistentes. Para salvar imediatamente após editar/mover:
-
-```text
-/traineradmin npcsave
-/traineradmin npcsave <uuid_npc>
-/traineradmin npcrestore <uuid_npc> confirm
-```
-
-A restauração exige o mesmo NPC **já carregado**, mesmo UUID/tipo/vínculo, dimensão existente e nenhuma batalha do treinador em andamento. Antes de aplicar, o estado atual é arquivado em `npc-restore-backups/`. NPCs com passageiros/montarias não são restaurados até desmontar. A restauração pode mover o NPC para sua dimensão/posição salva, mas não cria entidades novas: chunk descarregado não é evidência de exclusão. Dados externos ao NBT, mantidos por outro mod em arquivos próprios, também precisam dos backups nativos desse mod. Faça backup do mundo junto com `config/`.
 
 ## Novidades da versão 0.2.0
 
@@ -158,6 +143,6 @@ Downloads são distribuídos pelas Releases do GitHub. As versões anteriores à
 
 ## Correção 0.2.1: envio inicial do adversário
 
-Corrigido o ator sem entidade que deixava o Pokémon adversário ausente no primeiro envio do Cobblemon 1.8.3. O desafio por `/trainer <id>` também funciona sem NPC: usa origem invisível temporária, não persistida, limpa ao encerrar. A inicialização é monitorada por até 30 segundos; se falhar, a sessão é abortada sem recompensas nem novo cooldown. Configurações e progresso existentes são preservados. Substitua o JAR antigo com o servidor parado e reinicie.
+Corrigido o ator sem entidade que deixava o Pokémon adversário ausente no primeiro envio do Cobblemon 1.8.3. A luta usa uma origem invisível temporária, independente por jogador e limpa no encerramento. A inicialização é monitorada por até 30 segundos; se falhar, a sessão é abortada sem recompensas nem novo cooldown. Configurações e progresso existentes são preservados. Substitua o JAR antigo com o servidor parado e reinicie.
 
 Regressão de integração: `./gradlew :fabric:runBattleSmoke`, em mundo isolado `fabric/run-smoke/`, com EULA aceita pelo operador. O harness inicia e encerra seu próprio servidor, reproduz o ator antigo sem adversário ativo e verifica envio dos dois Pokémon e término de uma batalha por IA com o ator corrigido. Confira `fabric/run-smoke/battle-smoke-result.json`: a saída Gradle sozinha não basta, `success` precisa ser `true`. O módulo de teste não integra o JAR de produção e não equivale a um teste da interface com cliente.

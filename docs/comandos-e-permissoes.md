@@ -1,18 +1,18 @@
-# Comandos e permissões — Shirokai Trainers 0.2.1
+# Comandos e permissões — Shirokai Trainers 0.2.2
 
 ## Instalar e começar
 
-Baixe o JAR na [Release v0.2.1](https://github.com/istwi/Shirokai-Trainers/releases/tag/v0.2.1) e coloque-o em `mods/` **do servidor**. Use Minecraft 1.21.1, Java 21, Fabric Loader >=0.17.2, Fabric API >=0.116.6+1.21.1, Fabric Language Kotlin >=1.13.6+kotlin.2.2.20 e Cobblemon **1.8.3+1.21.1**. Clientes precisam do Cobblemon compatível; não precisam do Shirokai Trainers.
+Baixe o JAR na [Release v0.2.2](https://github.com/istwi/Shirokai-Trainers/releases/tag/v0.2.2) e coloque-o em `mods/` **do servidor**. Use Minecraft 1.21.1, Java 21, Fabric Loader >=0.17.2, Fabric API >=0.116.6+1.21.1, Fabric Language Kotlin >=1.13.6+kotlin.2.2.20 e Cobblemon **1.8.3+1.21.1**. Clientes precisam do Cobblemon compatível; não precisam do Shirokai Trainers.
 
-EasyNPC e LuckPerms são opcionais. Verifique os requisitos próprios da versão EasyNPC escolhida; a revisão investigada requer Loader >=0.18.3 e Fabric API >=0.116.7+1.21.1. Não é necessário instalar Cobblemon Trainer Battle. Esta é uma pré-release para os [testes finais no jogo](guia-testes.md).
+EasyNPC e LuckPerms são opcionais. EasyNPC não é integrado pelo mod: se for usado, ele deve executar o comando de batalha como console/servidor. Não é necessário instalar Cobblemon Trainer Battle. Esta é uma pré-release para os [testes finais no jogo](guia-testes.md).
 
-No jogo, os comandos começam com `/`. No console, retire a `/`. Comandos que abrem menus, usam buffer pessoal ou clicam em NPC precisam de um jogador conectado.
+No jogo, os comandos começam com `/`. No console, retire a `/`. Comandos que abrem menus ou usam buffer pessoal precisam de um jogador conectado.
 
 ## Permissões implementadas
 
 | Acesso | Regra efetiva |
 | --- | --- |
-| `/trainer`, `/trainerstatus`, `/trainerclaim` | Disponíveis a jogadores comuns, sem OP. Não há nós próprios como `shirokai.use` nessa versão. |
+| `/trainerstatus`, `/trainerclaim` | Disponíveis a jogadores comuns, sem OP. Não há nó próprio como `shirokai.use` nessa versão. |
 | `/traineradmin` e todos os subcomandos | `shirokai.admin`, consultada pela Fabric Permissions API. Sem decisão do provedor de permissões, usa fallback de nível de permissão Minecraft **2**. |
 | Requisito de dificuldade `permission` | Nó escolhido pelo administrador; sem concessão do provedor, o padrão é **negar**. |
 | Recompensa `required_permission` | Nó escolhido pelo administrador; sem concessão do provedor, o padrão é **negar**. |
@@ -58,12 +58,10 @@ Esse nó personalizado só será exigido porque foi configurado naquela dificuld
 
 | Comando | O que faz |
 | --- | --- |
-| `/trainer` | Abre o menu de treinadores. |
-| `/trainer <id> [dificuldade]` | Inicia o desafio, respeitando requisitos, cooldown e disponibilidade. Sem dificuldade explícita, usa a primeira ou a seleção automática configurada. |
 | `/trainerstatus` | Mostra suas vitórias, derrotas e quantidade de recompensas pendentes/em revisão. |
 | `/trainerclaim` | Tenta entregar suas recompensas PENDING. Falta de espaço continua pendente; entregas incertas não são repetidas automaticamente. |
 
-Para desafiar por NPC vinculado: **agache e clique com a mão principal vazia**. O clique normal fica disponível para as funções originais do EasyNPC. Cada participante precisa de Pokémon aptos na equipe.
+Jogadores não têm um comando para abrir ou iniciar desafios. Use `/traineradmin <jogador> battle <id_da_luta>` pelo console, por um administrador ou como ação de console/servidor configurada no EasyNPC. A ordem `/traineradmin battle <jogador> <id_da_luta>` também é aceita. Cada participante precisa de Pokémon aptos na equipe. Por padrão, `Simultâneas` fica ativado no editor: várias execuções para jogadores diferentes criam batalhas, recompensas e cooldowns separados.
 
 ## Comandos administrativos
 
@@ -97,11 +95,7 @@ Todos exigem `shirokai.admin` ou o fallback descrito acima. `<id>` identifica o 
 | `/traineradmin rewardgroup <id> <dif> win ou loss <grupo> <modo>` | Cria um grupo ou altera seu modo de seleção. Use `win` ou `loss`, sem a palavra `ou`. |
 | `/traineradmin reward <id> <dif> win ou loss <grupo> <recompensa> <JSON parcial ou buffer>` | Cria/edita uma recompensa no grupo existente. |
 | `/traineradmin rewardremove <id> <dif> win ou loss <grupo> <recompensa>` | Remove a recompensa da configuração, preservando o histórico de claims. |
-| `/traineradmin bind <id>` | Inicia vinculação por clique em NPC, com prazo de 60 segundos. |
-| `/traineradmin bindconfirm` | Confirma o NPC selecionado, perto do administrador e na mesma dimensão, dentro do prazo. |
-| `/traineradmin unbind <uuid_npc>` | Remove a vinculação. Não remove a entidade. |
-| `/traineradmin npcsave [uuid_npc]` | Salva configuração/localização do NPC carregado; sem UUID, tenta todos os vinculados. |
-| `/traineradmin npcrestore <uuid_npc> confirm` | Restaura um snapshot no NPC existente e carregado, com backup do estado anterior. |
+| `/traineradmin <jogador> battle <id_da_luta>` | Inicia para o jogador online a batalha configurada. Pode ser chamado pelo console ou pela ação de console/servidor de outro mod. A ordem `battle <jogador> <id_da_luta>` também é aceita. |
 | `/traineradmin data <uuid_jogador>` | Consulta progresso, cooldowns, claims e entregas daquele jogador. |
 | `/traineradmin reset <uuid_jogador> confirm` | Zera apenas aquele jogador, com backup; recusa se houver sessão ativa dele. |
 | `/traineradmin objective <uuid_jogador> <objetivo> grant` | Concede um objetivo personalizado. |
@@ -129,20 +123,13 @@ Todos exigem `shirokai.admin` ou o fallback descrito acima. `<id>` identifica o 
 
 O editor permite selecionar espécie, forma, Nature, Ability, movimentos e item, ajustar níveis, IVs, EVs e Shiny e copiar para outra equipe. Clique direito reduz valores numéricos. Validações impedem dados inválidos e EVs acima do total permitido.
 
-Crie seu NPC pelo EasyNPC ou pelos recursos nativos do Cobblemon. Em seguida:
+Crie seu NPC no EasyNPC e configure a ação de clique para executar como console/servidor:
 
 ```text
-/traineradmin bind brock
+traineradmin <jogador> battle brock
 ```
 
-Clique no NPC e depois execute:
-
-```text
-/traineradmin bindconfirm
-/traineradmin npcsave
-```
-
-Jogador sem OP pode usar `/trainer brock` ou o gesto de agachar/clicar no NPC. Vinculação e snapshot são gravados por UUID; se o NPC for removido e recriado com outro UUID, vincule novamente.
+Substitua `<jogador>` pelo placeholder de jogador da versão do EasyNPC instalada. O mod não lê, altera nem salva o NPC; ele só inicia a batalha normal do Cobblemon para o jogador informado.
 
 ## Recompensas: fixa e sorteio
 
@@ -199,6 +186,6 @@ Para inserir outro Pokémon, use `input append <blank>` antes do cabeçalho dele
 
 ## Dados e recuperação
 
-Arquivos ficam em `config/shirokai_trainers/`. Dados de jogador usam UUID. Backups preservam versões anteriores e não são apagados automaticamente. Faça backup do mundo junto com as configurações para preservar as entidades e seus dados próprios.
+Arquivos ficam em `config/shirokai_trainers/`. Dados de jogador usam UUID. Backups preservam versões anteriores e não são apagados automaticamente.
 
-Snapshot não recria NPC desaparecido: carregue o chunk da entidade existente antes de `npcrestore`. Antes de restaurar, o mod arquiva o estado atual. Para entregas em `IN_FLIGHT` ou `NEEDS_REVIEW`, confira logs/inventário antes de `retry_confirm`; repetir um comando externo não idempotente pode duplicar efeitos. Entregas sem espaço que continuam PENDING usam `/trainerclaim` normalmente.
+Para entregas em `IN_FLIGHT` ou `NEEDS_REVIEW`, confira logs/inventário antes de `retry_confirm`; repetir um comando externo não idempotente pode duplicar efeitos. Entregas sem espaço que continuam PENDING usam `/trainerclaim` normalmente.

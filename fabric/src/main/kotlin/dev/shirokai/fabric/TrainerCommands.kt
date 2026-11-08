@@ -26,14 +26,6 @@ class TrainerCommands(private val mod: ShirokaiTrainers) {
             val review = p.deliveries.values.count { it.state in setOf(DeliveryState.NEEDS_REVIEW, DeliveryState.IN_FLIGHT) }
             ctx.source.sendSystemMessage(Component.literal("${summary.ifEmpty { "Nenhuma batalha registrada." }}\nRecompensas pendentes: $pending; revisão administrativa: $review")); 1
         } })
-        dispatcher.register(literal("trainer")
-            .executes { ctx -> protect(ctx.source) { TrainerMenus(mod).list(ctx.source.playerOrException); 1 } }
-            .then(argument("trainer", StringArgumentType.word())
-                .suggests { _, b -> mod.trainers.keys.forEach(b::suggest); b.buildFuture() }
-                .executes { ctx -> protect(ctx.source) { mod.challenge(ctx.source.playerOrException, StringArgumentType.getString(ctx, "trainer"), null); 1 } }
-                .then(argument("difficulty", StringArgumentType.word()).executes { ctx -> protect(ctx.source) {
-                    mod.challenge(ctx.source.playerOrException, StringArgumentType.getString(ctx, "trainer"), StringArgumentType.getString(ctx, "difficulty")); 1
-                } })))
         val admin = literal("traineradmin").requires(mod::admin)
             .executes { ctx -> protect(ctx.source) { TrainerMenus(mod).list(ctx.source.playerOrException, true); 1 } }
         ACTIONS.forEach { action ->
@@ -43,6 +35,13 @@ class TrainerCommands(private val mod: ShirokaiTrainers) {
                     execute(ctx.source, action, StringArgumentType.getString(ctx, "args")); 1
                 } }))
         }
+        admin.then(argument("player", StringArgumentType.word())
+            .then(literal("battle")
+                .then(argument("battle", StringArgumentType.word())
+                    .suggests { _, b -> mod.trainers.keys.forEach(b::suggest); b.buildFuture() }
+                    .executes { ctx -> protect(ctx.source) {
+                        startBattle(ctx.source, StringArgumentType.getString(ctx, "player"), StringArgumentType.getString(ctx, "battle")); 1
+                    } })))
         dispatcher.register(admin)
     }
     private fun protect(source: CommandSourceStack, action: () -> Int): Int = try { action() } catch (e: Exception) {
@@ -217,24 +216,9 @@ class TrainerCommands(private val mod: ShirokaiTrainers) {
                 }
                 mod.audit(actor, "template $operation $name $id $difficulty")
             }
-            "bind" -> { mod.beginBind(source.playerOrException, text.trim()); source.sendSystemMessage(Component.literal("Clique no NPC desejado em até 60s.")) }
-            "bindconfirm" -> { mod.confirmBind(source.playerOrException); source.sendSystemMessage(Component.literal("Vinculação salva.")) }
-            "npcsave" -> {
-                val count = if (text.isBlank()) mod.npcSnapshots.captureAll() else if (mod.npcSnapshots.capture(UUID.fromString(text.trim()))) 1 else 0
-                mod.audit(actor, "npcsave $count")
-                source.sendSystemMessage(Component.literal("Configuração e localização salvas: $count NPCs carregados. Registros de NPCs descarregados foram preservados."))
-            }
-            "npcrestore" -> {
-                val (uuid, confirmation) = parts(text, 2)
-                require(confirmation == "confirm")
-                mod.npcSnapshots.restore(UUID.fromString(uuid), actor)
-                source.sendSystemMessage(Component.literal("Configuração e localização do NPC restauradas."))
-            }
-            "unbind" -> {
-                val id = UUID.fromString(text.trim())
-                mod.bindings.npcs.remove(id)
-                mod.store.write(mod.store.root.resolve("bindings.json"), mod.bindings)
-                mod.audit(actor, "unbind $id")
+            "battle" -> {
+                val (playerName, trainerId) = parts(text, 2)
+                startBattle(source, playerName, trainerId)
             }
             "data" -> {
                 val id = UUID.fromString(text.trim())
@@ -286,6 +270,11 @@ class TrainerCommands(private val mod: ShirokaiTrainers) {
         }
         if (action !in setOf("help", "show", "data", "export", "input")) source.sendSystemMessage(Component.literal("§aOperação concluída."))
     }
+    private fun startBattle(source: CommandSourceStack, playerName: String, trainerId: String) {
+        val player = mod.server.playerList.getPlayerByName(playerName) ?: error("Jogador não está online: $playerName")
+        mod.challenge(player, trainerId, null)
+        mod.audit(source.textName, "battle $playerName $trainerId")
+    }
     private fun <T> merge(base: T, text: String, type: Class<T>): T {
         val json = com.google.gson.GsonBuilder().serializeNulls().create().toJsonTree(base).asJsonObject
         val patch = StrictJson.parse(text).asJsonObject
@@ -295,9 +284,8 @@ class TrainerCommands(private val mod: ShirokaiTrainers) {
     }
     data class TeamTemplate(val team: List<PokemonSpec>)
     companion object {
-        val ACTIONS = listOf("help", "create", "edit", "name", "config", "show", "input", "team", "pokemon", "remove", "copy", "difficulty", "settings", "requirements", "rewardgroup", "reward", "rewardremove", "dialogue", "import", "export", "template", "bind", "bindconfirm", "npcsave", "npcrestore", "unbind", "data", "reset", "objective", "delivery", "claim", "reload", "retryresults", "debug")
+        val ACTIONS = listOf("help", "create", "edit", "name", "config", "show", "input", "team", "pokemon", "remove", "copy", "difficulty", "settings", "requirements", "rewardgroup", "reward", "rewardremove", "dialogue", "import", "export", "template", "battle", "data", "reset", "objective", "delivery", "claim", "reload", "retryresults", "debug")
         val HELP = """
-            /trainer [id] [dificuldade] — menu ou batalha sem OP
             /traineradmin create <id> | edit <id> | name <id> <nome>
             /traineradmin team <id> <dificuldade> add|clear
             /traineradmin pokemon <id> <dificuldade> <slot 1..6> <JSON|buffer>
@@ -314,9 +302,8 @@ class TrainerCommands(private val mod: ShirokaiTrainers) {
             /traineradmin export <id> <dificuldade>
             /traineradmin template save|load <nome> <id> <dificuldade>
             /traineradmin config <id> <JSON|buffer> | show <id>
-            /traineradmin bind <id> → clicar → bindconfirm
-            /traineradmin unbind <uuid_entidade>
-            /traineradmin npcsave [uuid_entidade] | npcrestore <uuid_entidade> confirm
+            /traineradmin <jogador> battle <id_da_luta>
+            /traineradmin battle <jogador> <id_da_luta>
             /traineradmin data <uuid> | reset <uuid> confirm
             /traineradmin objective <uuid> <objetivo> grant|revoke
             /traineradmin delivery <uuid> <id_entrega> retry_confirm|delivered_confirm
