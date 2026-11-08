@@ -2,6 +2,9 @@ name: Build and publish release
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -12,7 +15,7 @@ concurrency:
 
 jobs:
   release:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release-v0.2.2]'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -40,6 +43,8 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          test "$(gh release view v0.2.2 --json isDraft --jq '.isDraft')" = true
+          if ! gh release view v0.2.2 >/dev/null 2>&1; then
+            gh release create v0.2.2 --target "$GITHUB_SHA" --title 'Shirokai Trainers 0.2.2 — batalhas acionadas por comando' --notes-file docs/release-v0.2.2.md --draft --prerelease
+          fi
           gh release upload v0.2.2 release-assets/* --clobber
           gh release edit v0.2.2 --target "$GITHUB_SHA" --title 'Shirokai Trainers 0.2.2 — batalhas acionadas por comando' --notes-file docs/release-v0.2.2.md --draft=false --prerelease
