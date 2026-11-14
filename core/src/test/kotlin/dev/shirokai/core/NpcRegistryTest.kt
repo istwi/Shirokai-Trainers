@@ -28,6 +28,29 @@ class NpcRegistryTest {
         assertContentEquals(playerBytes, Files.readAllBytes(store.playerPath(player.uuid)))
     }
 
+    @Test fun `command NPC round trips and legacy record has no click command`() {
+        val root = Files.createTempDirectory("npc-command")
+        val store = JsonStore(root)
+        val file = root.resolve("npcs.json")
+        val independent = npc().copy(trainer = null,
+            clickCommand = NpcClickCommand("console", "tp %player% 0 80 0"))
+        store.write(file, NpcRegistry(npcs = listOf(independent)))
+        assertEquals(independent, store.read(file, NpcRegistry::class.java) { it.validate() }!!.npcs.single())
+        val legacy = com.google.gson.Gson().fromJson("""{"id":"old","entity":"${UUID.randomUUID()}","owned":true,"trainer":"blue","dimension":"minecraft:overworld","x":0,"y":64,"z":0,"message":"Oi","confirmation":"Sim","confirm":true,"removed":false}""", TrainerNpc::class.java)
+        legacy.validate()
+        assertNull(legacy.clickCommand)
+    }
+
+    @Test fun `command validates executor placeholders and prevents mixing battle and command`() {
+        val command = NpcClickCommand("console", "tp %player% 0 80 0")
+        assertEquals("tp Alex 0 80 0", command.render("Alex", UUID.randomUUID()))
+        assertFailsWith<IllegalArgumentException> { npc().copy(clickCommand = command).validate() }
+        assertFailsWith<IllegalArgumentException> { command.copy(executor = "op").validate() }
+        assertFailsWith<IllegalArgumentException> { command.copy(command = "say %trainer_id%").validate() }
+        assertFailsWith<IllegalArgumentException> { command.copy(command = "say %player%\nstop").validate() }
+        assertFailsWith<IllegalArgumentException> { command.copy(command = "say prefix%player%").validate() }
+    }
+
     @Test fun `reject duplicate IDs and entity bindings`() {
         val first = npc()
         assertFailsWith<IllegalArgumentException> { NpcRegistry(npcs = listOf(first, npc())).validate() }

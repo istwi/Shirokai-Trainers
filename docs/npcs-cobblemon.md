@@ -119,3 +119,37 @@ Ainda é necessário testar em jogo:
 - `./gradlew test :fabric:build` **falhou antes da compilação Fabric**, na resolução de `fabric-loom:1.11.8`; o proxy retornou 403 para `maven.fabricmc.net` e `artefacts.cobblemon.com`. Não foi produzido JAR validado da nova integração.
 - Servidor, harness de batalhas e cenários com cliente **não executados**. Os testes do core não demonstram spawn/renderização, clique real, teleporte, unload/restart de entidades, nem entrega de comandos dentro do Minecraft.
 - Salvos no rascunho do ambiente `install_script` (JDK, ativação, proxy/CA e wrapper), `start_skill` (ativação, comandos e bloqueios) e concessões de rede para Fabric/Cobblemon/Minecraft. Salvar o rascunho não aplica nem publica. Após revisar/salvar nas configurações e publicar o ambiente, retomar a compilação Fabric e corrigir qualquer incompatibilidade que ela revelar antes de distribuir o mod.
+
+## NPCs independentes com comandos
+
+NPCs de comandos não exigem treinador e não iniciam batalhas. A criação, aparência,
+movimentação, remoção e persistência usam o mesmo índice de entidades nativas.
+Os NPCs de batalha existentes continuam com seu desafio e confirmação atuais.
+
+```text
+/traineradmin npc create-command recepcionista
+/traineradmin npc command recepcionista player menu
+/traineradmin npc create-command portal
+/traineradmin npc command portal console tp %player% 100 70 200
+/traineradmin npc clear-command portal
+```
+
+Substitua `menu` pelo comando real do mod de menus instalado no servidor.
+O clique direito executa um comando, sem a confirmação de batalha, com intervalo
+mínimo de 750 ms por jogador. NPC sem comando configurado apenas consome o clique.
+`player` executa como quem clicou, com suas permissões normais e contexto de posição.
+`console` executa com permissão do servidor, na dimensão e posição do jogador;
+use `%player%` ou `%player_uuid%` para indicar o destinatário. O jogador não recebe OP.
+Comandos não incluem `/`; placeholders devem ocupar argumentos completos.
+Somente administradores configuram ações. Comandos são validados antes de salvar.
+Comandos do tipo `player` continuam sujeitos às permissões no momento do clique.
+
+O menu administrativo oferece criação e configuração dos NPCs independentes.
+`show <npc>` mostra a ação persistida. `clear-command` deixa a entidade inativa.
+Não é permitido configurar comando em NPC vinculado a batalha nem vincular treinador
+antes de remover o comando. Nenhum treinador ou progresso é alterado por essas ações.
+
+Validação em servidor: com um jogador sem OP, verificar um menu de outro mod em
+modo `player`, o teleporte em modo `console`, ambos os cliques/mãos sem duplicação,
+reconexão e reinício mantendo o comando, e um NPC de batalha antigo ainda abrindo
+sua confirmação e iniciando a luta normalmente. Isso exige servidor e cliente reais.
