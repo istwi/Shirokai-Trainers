@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: native-npcs-v0.3.1
+  group: native-npcs-v0.3.2
   cancel-in-progress: false
 
 jobs:
@@ -29,14 +29,14 @@ jobs:
         run: |
           set -euo pipefail
           mkdir release-assets
-          cp fabric/build/libs/shirokai-trainers-0.3.1.jar release-assets/
+          cp fabric/build/libs/shirokai-trainers-0.3.2.jar release-assets/
           cp docs/npcs-cobblemon.md release-assets/NPCS-COBBLEMON.md
           cd release-assets
-          sha256sum shirokai-trainers-0.3.1.jar > shirokai-trainers-0.3.1.jar.sha256
+          sha256sum shirokai-trainers-0.3.2.jar > shirokai-trainers-0.3.2.jar.sha256
       - name: Upload JAR to Actions
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: shirokai-trainers-0.3.1
+          name: shirokai-trainers-0.3.2
           path: release-assets/*
           if-no-files-found: error
           retention-days: 30

@@ -18,7 +18,10 @@ import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import java.nio.file.Files
 import java.util.UUID
-import javax.imageio.ImageIO
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
 
 class TrainerNpcs(private val mod: ShirokaiTrainers) {
     private val path = mod.store.root.resolve("npcs.json")
@@ -26,6 +29,11 @@ class TrainerNpcs(private val mod: ShirokaiTrainers) {
     private data class Selection(val id: String?, val trainer: String?, val expires: Long)
     private val selections = mutableMapOf<UUID, Selection>()
     private val clickTimes = mutableMapOf<UUID, Long>()
+
+    private val skinRequests = mutableMapOf<UUID, UUID>()
+    @Volatile private var skinsClosed = false
+    private val skinDownloads = ThreadPoolExecutor(2, 2, 0L, TimeUnit.SECONDS, ArrayBlockingQueue<Runnable>(16),
+        java.util.concurrent.ThreadFactory { task -> Thread(task, "Shirokai-Skins").apply { isDaemon = true } })
 
     fun load() {
         val registry = mod.store.read(path, NpcRegistry::class.java) { it.validate() } ?: NpcRegistry()
@@ -42,6 +50,9 @@ class TrainerNpcs(private val mod: ShirokaiTrainers) {
     private fun trainer(id: String) { require(id in mod.trainers) { "Treinador inexistente: $id" } }
 
     fun register() {
+        ServerLifecycleEvents.SERVER_STOPPING.register {
+            skinsClosed = true; skinRequests.clear(); skinDownloads.shutdownNow()
+        }
         ServerPlayConnectionEvents.DISCONNECT.register { h, _ -> selections.remove(h.player.uuid); clickTimes.remove(h.player.uuid) }
         ServerEntityEvents.ENTITY_LOAD.register { entity, _ ->
             if (entity is NPCEntity) records.values.find { it.entity == entity.uuid }?.let {
@@ -182,7 +193,11 @@ class TrainerNpcs(private val mod: ShirokaiTrainers) {
                 }
                 put(next)
             }
-            "name", "class", "resource", "aspects", "stationary", "move", "rotate", "skin" -> {
+            "skin" -> {
+                skin(source, record(id), value)
+                return
+            }
+            "name", "class", "resource", "aspects", "stationary", "move", "rotate" -> {
                 val r = record(id); val npc = entity(r)
                 when (action) {
                     "name" -> { require(value.isNotBlank() && value.length <= 200); npc.customName = Component.literal(value) }
@@ -212,7 +227,6 @@ class TrainerNpcs(private val mod: ShirokaiTrainers) {
                         require(value.isEmpty()) { "move usa a posição e dimensão do administrador" }
                         check(npc.teleportTo(p.serverLevel(), p.x, p.y, p.z, emptySet(), p.yRot, p.xRot)) { "Falha ao mover NPC" }
                     }
-                    "skin" -> skin(npc, value)
                 }
                 // Dimension transfer can replace an entity instance: resolve the UUID again before indexing.
                 val current = mod.server.allLevels.firstNotNullOfOrNull { it.getEntity(r.entity) as? NPCEntity } ?: npc
@@ -226,27 +240,82 @@ class TrainerNpcs(private val mod: ShirokaiTrainers) {
         }
     }
     private fun boolean(value: String): Boolean = when (value) { "true" -> true; "false" -> false; else -> error("Use true ou false") }
-    private fun skin(npc: NPCEntity, value: String) {
-        if (value == "clear") { npc.unloadTexture(); return }
-        val args = value.split(Regex("\\s+")); require(args.size == 2) { "skin <id> <arquivo.png> default|slim" }
-        require(args[0].matches(Regex("[a-zA-Z0-9_-]+\\.png"))) { "Use um nome PNG local, sem diretórios" }
-        val model = when (args[1]) { "default" -> NPCPlayerModelType.DEFAULT; "slim" -> NPCPlayerModelType.SLIM; else -> error("Modelo: default ou slim") }
-        val root = mod.store.root.resolve("npc-skins"); Files.createDirectories(root)
-        val file = root.resolve(args[0]); require(!Files.isSymbolicLink(file) && Files.isRegularFile(file)) { "PNG ausente em $root" }
-        require(Files.size(file) in 1..1_048_576) { "PNG deve ter até 1 MiB" }
-        val bytes = Files.readAllBytes(file)
-        ImageIO.createImageInputStream(bytes.inputStream()).use { input ->
-            val readers = ImageIO.getImageReaders(input); require(readers.hasNext()) { "Imagem inválida" }
-            val reader = readers.next()
-            try {
-                reader.input = input
-                require(reader.formatName.equals("png", true) && reader.getWidth(0) == 64 && reader.getHeight(0) in setOf(32, 64)) { "Skin deve ser PNG 64x32 ou 64x64" }
-                reader.read(0)
-            } finally { reader.dispose() }
+    private fun applySkin(npc: NPCEntity, skin: SkinTexture) {
+        val model = if (skin.slim) NPCPlayerModelType.SLIM else NPCPlayerModelType.DEFAULT
+        npc.unloadTexture()
+        npc.appliedAspects.add("model-${model.name.lowercase()}")
+        npc.entityData.set(NPCEntity.NPC_PLAYER_TEXTURE, NPCPlayerTexture(skin.bytes, model))
+        npc.updateAspects()
+    }
+    private fun skin(source: CommandSourceStack, record: TrainerNpc, value: String) {
+        val npc = entity(record)
+        val args = value.split(Regex("\\s+"))
+        fun model(value: String): Boolean = when (value) {
+            "default" -> false; "slim" -> true; else -> error("Modelo: default ou slim")
         }
-        npc.appliedAspects.removeAll(setOf("model-default", "model-slim"))
-        npc.appliedAspects.add("model-${args[1]}")
-        npc.entityData.set(NPCEntity.NPC_PLAYER_TEXTURE, NPCPlayerTexture(bytes, model)); npc.updateAspects()
+        if (value == "clear") {
+            skinRequests.remove(record.entity); npc.unloadTexture()
+            mod.audit(source.textName, "npc skin clear ${record.id}")
+            source.sendSystemMessage(Component.literal("§aSkin personalizada removida.")); return
+        }
+        val remote: (() -> SkinTexture)? = when (args.firstOrNull()) {
+            "player", "nick" -> {
+                require(args.size == 2 && args[1].matches(Regex("[A-Za-z0-9_]{1,16}"))) { "skin <npc> player <nick Minecraft>" }
+                val load: () -> SkinTexture = { RemoteSkins().player(args[1]) }
+                load
+            }
+            "url" -> {
+                require(args.size in 2..3) { "skin <npc> url <https://imagem.png> [default|slim]" }
+                val slim = model(args.getOrNull(2) ?: "default")
+                RemoteSkins.validateUrl(java.net.URI(args[1]))
+                val load: () -> SkinTexture = { RemoteSkins().url(args[1], slim) }
+                load
+            }
+            else -> null
+        }
+        if (remote == null) {
+            require(args.size == 2) { "skin <npc> <arquivo.png> default|slim; ou player <nick>; ou url <https://...> [default|slim]" }
+            val slim = model(args[1])
+            require(args[0].matches(Regex("[a-zA-Z0-9_-]+\\.png"))) { "Use nome PNG local, sem diretórios" }
+            val root = mod.store.root.resolve("npc-skins"); Files.createDirectories(root)
+            val file = root.resolve(args[0])
+            require(!Files.isSymbolicLink(file) && Files.isRegularFile(file)) { "PNG ausente em $root" }
+            require(Files.size(file) in 1..RemoteSkins.MAX_BYTES) { "PNG deve ter até 1 MiB" }
+            val texture = SkinTexture(RemoteSkins.validatePng(Files.readAllBytes(file)), slim)
+            skinRequests.remove(record.entity); applySkin(npc, texture)
+            mod.audit(source.textName, "npc skin local ${record.id}")
+            source.sendSystemMessage(Component.literal("§aSkin local aplicada.")); return
+        }
+        require(!skinsClosed) { "Servidor encerrando" }
+        val request = UUID.randomUUID()
+        skinRequests[record.entity] = request
+        try {
+            skinDownloads.execute {
+                val result = runCatching { remote() }
+                if (!skinsClosed) runCatching { mod.server.execute apply@ {
+                    if (skinsClosed || skinRequests[record.entity] != request) return@apply
+                    skinRequests.remove(record.entity)
+                    if (source.player != null && mod.server.playerList.getPlayer(source.player!!.uuid) !== source.player) return@apply
+                    try {
+                        require(mod.admin(source)) { "Permissão administrativa revogada" }
+                        val current = records[record.id]
+                        require(current != null && !current.removed && current.entity == record.entity) { "NPC removido ou desvinculado durante o download" }
+                        val texture = result.getOrThrow()
+                        val loaded = mod.server.allLevels.firstNotNullOfOrNull { it.getEntity(record.entity) as? NPCEntity }
+                            ?: error("NPC descarregado; carregue o local e tente novamente")
+                        applySkin(loaded, texture)
+                        mod.audit(source.textName, "npc skin remote ${record.id}")
+                        source.sendSystemMessage(Component.literal("§aSkin aplicada ao NPC ${record.id}."))
+                    } catch (e: Exception) {
+                        source.sendFailure(Component.literal("Skin não alterada: ${e.message ?: e.javaClass.simpleName}"))
+                    }
+                } }
+            }
+        } catch (e: java.util.concurrent.RejectedExecutionException) {
+            if (skinRequests[record.entity] == request) skinRequests.remove(record.entity)
+            error("Fila de skins cheia; aguarde os downloads atuais")
+        }
+        source.sendSystemMessage(Component.literal("§eCarregando skin para ${record.id}; aguarde a confirmação."))
     }
     companion object {
         val HELP = """
@@ -259,6 +328,8 @@ class TrainerNpcs(private val mod: ShirokaiTrainers) {
             /traineradmin npc confirm|stationary <npc> true|false
             /traineradmin npc rotate <npc> <yaw> [pitch]
             /traineradmin npc skin <npc> <arquivo.png> default|slim (ou clear)
+            /traineradmin npc skin <npc> player <nick> (ou nick <nick>)
+            /traineradmin npc skin <npc> url <https://imagem.png> [default|slim]
         """.trimIndent()
     }
 }
