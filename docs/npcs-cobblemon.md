@@ -35,7 +35,9 @@ Tudo requer `shirokai.admin` (fallback OP nível 2), inclusive cada ação de me
 | `resource <npc> <namespace:recurso\|default>` | Recurso de aparência ou retorno ao recurso da classe |
 | `aspects <npc> <aspecto1,aspecto2\|clear>` | Substitui aspectos aplicados; variações da classe continuam presentes |
 | `skin <npc> <arquivo.png> default\|slim` | Textura local de jogador via dados sincronizados nativos |
-| `skin <npc> clear` | Remove textura personalizada |
+| `skin <npc> player <nick>` | Busca skin oficial Java pela Mojang, detectando braços automaticamente (`nick` também é aceito no lugar de `player`) |
+| `skin <npc> url <https://imagem.png> [default\|slim]` | Baixa PNG direto por HTTPS; modelo padrão `default` |
+| `skin <npc> clear` | Remove textura personalizada e cancela download pendente |
 | `stationary <npc> true\|false` | Desativa/ativa AI, movimento e gravidade; não implementa rotas |
 | `move <npc>` | Move para posição e dimensão atuais do administrador, inclusive MultiWorld |
 | `rotate <npc> <yaw> [pitch]` | Rotação; pitch entre -90 e 90 |
@@ -49,7 +51,24 @@ Nome do NPC e ID do treinador são independentes. `blue_npc` pode exibir `Blue` 
 
 `class` valida a classe no registro real. `resource` identifica um recurso de renderização do Cobblemon, **não uma URL, caminho de PNG ou ID de textura isolado**. A presença de um recurso/modelo e a utilidade de cada aspecto dependem dos recursos instalados nos clientes. O servidor não consegue validar registros de renderização exclusivos do cliente. Use `classes` e recursos conhecidos; datapacks/resource packs adicionais precisam ser distribuídos pelo operador.
 
-Skins personalizadas são suportadas nativamente na API 1.8.3. Coloque, no servidor, `config/shirokai_trainers/npc-skins/blue.png`, PNG 64×64 ou 64×32, até 1 MiB. O comando envia os bytes no campo nativo `NPC_PLAYER_TEXTURE` e configura `model-default`/`model-slim`. Cobblemon salva os bytes no NBT e os sincroniza com clientes; Shirokai Trainers continua server-side. Não há download por URL, consulta de username nem dependência de outro mod de NPC. O administrador deve fornecer um arquivo apropriado; o resultado visual precisa de teste com cliente Cobblemon.
+Skins personalizadas são suportadas nativamente na API 1.8.3. Coloque, no servidor, `config/shirokai_trainers/npc-skins/blue.png`, PNG 64×64 ou 64×32, até 1 MiB. O comando envia os bytes no campo nativo `NPC_PLAYER_TEXTURE` e configura `model-default`/`model-slim`. Cobblemon salva os bytes no NBT e os sincroniza com clientes; Shirokai Trainers continua server-side. A partir da 0.3.2 também há download por URL e consulta de nick oficial, sem dependência de outro mod de NPC. O administrador deve fornecer um arquivo apropriado; o resultado visual precisa de teste com cliente Cobblemon.
+
+### Skin por nick ou URL (0.3.2)
+
+```text
+/traineradmin npc skin blue_npc player Notch
+/traineradmin npc skin blue_npc nick Notch
+/traineradmin npc skin blue_npc url https://seu-site.com/blue.png default
+/traineradmin npc skin blue_npc url https://seu-site.com/blue.png slim
+```
+
+Nick consulta perfil **oficial Java na Mojang** e detecta `default`/`slim`; nomes locais/offline e skins definidas por SkinRestorer não são consultados. Se o perfil não tiver skin personalizada ou não existir, o comando informa o erro e preserva a aparência atual. URL precisa retornar os bytes de uma imagem PNG 64×64 ou 64×32, até 1 MiB; páginas de sites de skins não são imagens diretas. Use HTTPS na porta padrão, sem credenciais. Downloads aceitam até três redirecionamentos, verificam destinos públicos e têm timeout de conexão/leitura de 10 segundos. Não desativam TLS.
+
+O comando confirma o início do download e depois anuncia sucesso/erro. Dois workers com fila limitada fazem rede e validação fora da thread principal. Apenas o resultado validado é aplicado na thread Minecraft, rechecando permissão, conexão do administrador e identidade do NPC. Uma solicitação de skin mais recente ou `clear` invalida downloads anteriores. Se o NPC for removido, desvinculado externamente ou descarregado durante o download, o resultado não cria/recarrega uma entidade; o administrador deve tentar novamente com o NPC carregado.
+
+A skin aplicada é uma cópia persistida em NBT pelo Cobblemon: reinícios e reloads não precisam fazer downloads novamente, e mudanças posteriores na skin do jogador não atualizam o NPC automaticamente. Reexecute o comando para atualizar. O servidor precisa acessar `api.mojang.com`, `sessionserver.mojang.com` e `textures.minecraft.net` para nick, ou o host HTTPS informado para URL.
+
+Testes automatizados usam respostas simuladas das APIs oficiais: perfil/base64, ambos os modelos de braços, upgrade do host de textura para HTTPS, PNG e dimensões/tamanho, nick/URL inválidos, perfil sem skin e exclusão de endereços privados. Acesso real às APIs e renderização/persistência com clientes ainda precisam de teste dentro do jogo. Verifique também duas solicitações consecutivas, `clear` durante download, desconexão/revogação de permissão, NPC removido/descarregado e falhas HTTP.
 
 ## Fluxo de batalha
 
@@ -119,3 +138,37 @@ Ainda é necessário testar em jogo:
 - `./gradlew test :fabric:build` **falhou antes da compilação Fabric**, na resolução de `fabric-loom:1.11.8`; o proxy retornou 403 para `maven.fabricmc.net` e `artefacts.cobblemon.com`. Não foi produzido JAR validado da nova integração.
 - Servidor, harness de batalhas e cenários com cliente **não executados**. Os testes do core não demonstram spawn/renderização, clique real, teleporte, unload/restart de entidades, nem entrega de comandos dentro do Minecraft.
 - Salvos no rascunho do ambiente `install_script` (JDK, ativação, proxy/CA e wrapper), `start_skill` (ativação, comandos e bloqueios) e concessões de rede para Fabric/Cobblemon/Minecraft. Salvar o rascunho não aplica nem publica. Após revisar/salvar nas configurações e publicar o ambiente, retomar a compilação Fabric e corrigir qualquer incompatibilidade que ela revelar antes de distribuir o mod.
+
+## NPCs independentes com comandos
+
+NPCs de comandos não exigem treinador e não iniciam batalhas. A criação, aparência,
+movimentação, remoção e persistência usam o mesmo índice de entidades nativas.
+Os NPCs de batalha existentes continuam com seu desafio e confirmação atuais.
+
+```text
+/traineradmin npc create-command recepcionista
+/traineradmin npc command recepcionista player menu
+/traineradmin npc create-command portal
+/traineradmin npc command portal console tp %player% 100 70 200
+/traineradmin npc clear-command portal
+```
+
+Substitua `menu` pelo comando real do mod de menus instalado no servidor.
+O clique direito executa um comando, sem a confirmação de batalha, com intervalo
+mínimo de 750 ms por jogador. NPC sem comando configurado apenas consome o clique.
+`player` executa como quem clicou, com suas permissões normais e contexto de posição.
+`console` executa com permissão do servidor, na dimensão e posição do jogador;
+use `%player%` ou `%player_uuid%` para indicar o destinatário. O jogador não recebe OP.
+Comandos não incluem `/`; placeholders devem ocupar argumentos completos.
+Somente administradores configuram ações. Comandos são validados antes de salvar.
+Comandos do tipo `player` continuam sujeitos às permissões no momento do clique.
+
+O menu administrativo oferece criação e configuração dos NPCs independentes.
+`show <npc>` mostra a ação persistida. `clear-command` deixa a entidade inativa.
+Não é permitido configurar comando em NPC vinculado a batalha nem vincular treinador
+antes de remover o comando. Nenhum treinador ou progresso é alterado por essas ações.
+
+Validação em servidor: com um jogador sem OP, verificar um menu de outro mod em
+modo `player`, o teleporte em modo `console`, ambos os cliques/mãos sem duplicação,
+reconexão e reinício mantendo o comando, e um NPC de batalha antigo ainda abrindo
+sua confirmação e iniciando a luta normalmente. Isso exige servidor e cliente reais.

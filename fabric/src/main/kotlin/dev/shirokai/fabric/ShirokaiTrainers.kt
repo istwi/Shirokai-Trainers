@@ -212,7 +212,7 @@ class ShirokaiTrainers : ModInitializer {
     }
     fun deliver(player: ServerPlayer) {
         val p = store.loadPlayer(player.uuid)
-        ledger.deliver(p, { delivery ->
+        val delivered = ledger.deliver(p, { delivery ->
             when (delivery.reward.kind) {
                 RewardKind.ITEM -> {
                     val item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(PokemonAdapter.resolveItem(delivery.reward.value)))
@@ -257,6 +257,11 @@ class ShirokaiTrainers : ModInitializer {
                 else -> Unit
             }
         })
+        delivered.forEach { delivery ->
+            delivery.reward.message?.takeIf { it.isNotBlank() }?.let { message ->
+                player.sendSystemMessage(Component.literal(message.replace(Regex("&([0-9a-fk-orA-FK-OR])"), "§$1")))
+            }
+        }
     }
     private fun itemCapacity(player: ServerPlayer, item: net.minecraft.world.item.Item): Int = (0 until 36).sumOf { slot ->
         val stack = player.inventory.getItem(slot)
