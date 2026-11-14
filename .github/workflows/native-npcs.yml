@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: native-npcs-v0.3.2
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   release:

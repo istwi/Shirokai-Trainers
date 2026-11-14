@@ -297,7 +297,8 @@ class TrainerNpcs(private val mod: ShirokaiTrainers) {
                     skinRequests.remove(record.entity)
                     if (source.player != null && mod.server.playerList.getPlayer(source.player!!.uuid) !== source.player) return@apply
                     try {
-                        require(mod.admin(source)) { "Permissão administrativa revogada" }
+                        val authority = source.player?.createCommandSourceStack() ?: source
+                        require(mod.admin(authority)) { "Permissão administrativa revogada" }
                         val current = records[record.id]
                         require(current != null && !current.removed && current.entity == record.entity) { "NPC removido ou desvinculado durante o download" }
                         val texture = result.getOrThrow()
