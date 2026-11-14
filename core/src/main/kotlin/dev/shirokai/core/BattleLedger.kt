@@ -73,7 +73,8 @@ class BattleLedger(private val store: JsonStore, private val rewards: RewardEngi
         }
         return count
     }
-    fun deliver(p: PlayerProgress, grant: (Delivery) -> Unit, log: (String, Throwable?) -> Unit, preflight: (Delivery) -> Unit = {}) {
+    fun deliver(p: PlayerProgress, grant: (Delivery) -> Unit, log: (String, Throwable?) -> Unit, preflight: (Delivery) -> Unit = {}): List<Delivery> {
+        val delivered = mutableListOf<Delivery>()
         p.deliveries.values.filter { it.state == DeliveryState.PENDING }.forEach { d ->
             try { preflight(d) } catch (e: DeliveryDeferred) {
                 if (d.error != e.message) {
@@ -88,6 +89,7 @@ class BattleLedger(private val store: JsonStore, private val rewards: RewardEngi
                 grant(d)
                 d.state = DeliveryState.DELIVERED; d.error = null
                 store.savePlayer(p)
+                delivered.add(d)
                 log("Recompensa concedida: ${p.uuid} ${d.id}", null)
             } catch (e: Exception) {
                 d.state = DeliveryState.NEEDS_REVIEW; d.error = e.message
@@ -95,5 +97,6 @@ class BattleLedger(private val store: JsonStore, private val rewards: RewardEngi
                 log("Entrega requer revisão: ${p.uuid} ${d.id}", e)
             }
         }
+        return delivered
     }
 }

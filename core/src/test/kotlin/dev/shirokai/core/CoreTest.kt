@@ -205,6 +205,29 @@ class CoreTest {
         assertEquals(1, granted)
     }
 
+    @Test fun `notification candidates contain only newly persisted successful rewards`() {
+        val store = JsonStore(dir)
+        val p = PlayerProgress(UUID.randomUUID())
+        val rewards = listOf(
+            Reward("money", RewardKind.COMMAND, "say money", message = "&aVocê ganhou 5000 dollars!"),
+            Reward("tokens", RewardKind.COMMAND, "say tokens", chance = 0.0, message = "Tokens!"),
+            Reward("failed", RewardKind.COMMAND, "say failed", message = "Não deve aparecer"),
+            Reward("pending", RewardKind.ITEM, "minecraft:diamond", message = "Entregue depois")
+        )
+        val s = session(p.uuid, listOf(RewardGroup("prizes", rewards = rewards)))
+        val ledger = BattleLedger(store)
+        ledger.reserve(s); ledger.finish(s.id, Outcome.WIN, context(p), 2000)
+        val delivered = ledger.deliver(p, { if (it.reward.id == "failed") error("Command failed") }, { _, _ -> }, {
+            if (it.reward.id == "pending") throw DeliveryDeferred("No space")
+        })
+        assertEquals(listOf("money"), delivered.map { it.reward.id })
+        assertEquals("&aVocê ganhou 5000 dollars!", delivered.single().reward.message)
+        assertEquals(DeliveryState.DELIVERED, store.loadPlayer(p.uuid).deliveries.getValue(delivered.single().id).state)
+        val later = ledger.deliver(store.loadPlayer(p.uuid), {}, { _, _ -> })
+        assertEquals(listOf("pending"), later.map { it.reward.id })
+        assertTrue(ledger.deliver(store.loadPlayer(p.uuid), {}, { _, _ -> }).isEmpty())
+    }
+
     @Test fun `guaranteed plus random still respects eligibility and never invents loss rewards for flee`() {
         val p = PlayerProgress(UUID.randomUUID())
         val fixed = Reward("fixed", RewardKind.ITEM, "minecraft:stone", guaranteed = true, chance = 0.0)

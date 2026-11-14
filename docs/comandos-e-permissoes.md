@@ -193,3 +193,16 @@ Para entregas em `IN_FLIGHT` ou `NEEDS_REVIEW`, confira logs/inventário antes d
 ## NPCs nativos
 
 `/traineradmin npc` fornece criação, vínculo por clique e administração de NPCs do Cobblemon 1.8.3 com `shirokai.admin`. Jogadores comuns desafiam pelo clique sem OP. Consulte a [referência completa e exemplo](npcs-cobblemon.md). Os comandos administrativos de batalha existentes são preservados.
+
+## Mensagem individual de recompensa (0.3.1)
+
+Cada recompensa aceita `message` opcional, até 2.000 caracteres, com cores `&a`, `&e`, etc. O aviso aparece somente quando essa recompensa foi entregue e o estado DELIVERED foi persistido. Recompensas não sorteadas, pendentes ou em revisão não anunciam ganho. A consulta de pendências não repete avisos de entregas anteriores. Uma entrega adiada anuncia quando concluir. Mensagens não são comandos e não interpolam placeholders. Arquivos antigos continuam compatíveis sem esse campo.
+
+Exemplo para o treinador dificil_1 (IDs do grupo e recompensas devem corresponder aos existentes):
+
+```text
+/traineradmin reward dificil_1 normal win premios_vitoria dollars {"message":"&aVocê recebeu 5.000 dollars!"}
+/traineradmin reward dificil_1 normal win premios_vitoria tokens {"message":"&eVocê ganhou 2 tokens!"}
+```
+
+Esses patches preservam os comandos, chances e limites das recompensas existentes. A mensagem de tokens usa o mesmo sorteio da recompensa de tokens; não crie uma recompensa separada de mensagem com outro sorteio. Em JSON completo, acrescente `"message": "&aVocê recebeu 5.000 dollars!"` ao objeto da recompensa correspondente. Mensagens de chat são avisos de melhor esforço; uma queda após persistir a entrega e antes de enviar chat não provoca reentrega nem reenvio retroativo do aviso.

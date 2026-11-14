@@ -77,13 +77,15 @@ data class Reward(
     val max_claims_per_player: Int = 0,
     val required_permission: String? = null,
     val required_scoreboard: Map<String, Int> = emptyMap(),
-    val required_previous_victories: Map<String, Int> = emptyMap()
+    val required_previous_victories: Map<String, Int> = emptyMap(),
+    val message: String? = null
 ) {
     fun validate() {
         require(validId(id)) { "ID de recompensa inválido" }
         require(chance.isFinite() && chance in 0.0..100.0) { "Chance deve estar entre 0 e 100" }
         require(weight.isFinite() && weight > 0) { "Peso deve ser positivo" }
         require(amount in 1..2304 && cooldown_seconds in 0..315360000 && max_claims_per_player >= 0)
+        require(message == null || message.length <= 2000) { "Mensagem de recompensa muito longa" }
         require(value.isNotBlank())
         Requirements(required_permission, required_scoreboard, required_previous_victories).validate()
         if (kind == RewardKind.COMMAND) CommandTemplate.validate(value)
