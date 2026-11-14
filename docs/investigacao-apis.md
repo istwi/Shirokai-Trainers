@@ -43,3 +43,7 @@ Arquivos consultados:
 Alternativa de integração: callback Fabric de uso de entidade, associação por UUID e interação explícita (por exemplo, agachar e clicar com mão vazia) para iniciar batalha; interações normais retornam PASS e continuam no EasyNPC. O modo administrativo captura somente o clique de vinculação e exige confirmação. Não substituir ações existentes ou executar comandos como jogador OP. Validar a ordem dos callbacks na versão binária selecionada.
 
 EasyNPC e Cobblemon Trainer Battle não são dependências do núcleo. Cobblemon Trainer Battle não deve estar presente na validação.
+
+## NPCs nativos (nova integração)
+
+A investigação específica da tag 1.8.3, estratégia de persistência única, propriedades e texturas suportadas estão em [NPCs Cobblemon](npcs-cobblemon.md#api-consultada). A integração usa `NPCEntity` e `UseEntityCallback`, sem EasyNPC. A seção histórica EasyNPC acima não é necessária para esse fluxo.

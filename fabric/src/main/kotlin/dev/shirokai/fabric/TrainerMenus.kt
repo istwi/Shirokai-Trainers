@@ -61,7 +61,77 @@ class TrainerMenus(private val mod: ShirokaiTrainers) {
         if (admin) buttons[49] = Button(Items.WRITABLE_BOOK, "Criar: /traineradmin create <id>") {
             player.closeContainer(); player.sendSystemMessage(Component.literal("/traineradmin create <id>"))
         }
+        if (admin) buttons[48] = Button(Items.ARMOR_STAND, "NPCs Cobblemon") { npcs(player) }
         open(player, if (admin) "Administrar treinadores" else "Desafiar treinador", buttons, admin)
+    }
+    fun npcChallenge(player: ServerPlayer, npc: dev.shirokai.core.TrainerNpc) {
+        open(player, npc.confirmation, mapOf(
+            20 to Button(Items.IRON_SWORD, npc.confirmation) {
+                player.closeContainer()
+                mod.npcs.challenge(player, npc.id, npc.entity)
+            },
+            24 to Button(Items.BARRIER, "Cancelar") { player.closeContainer() }
+        ), false)
+    }
+    fun npcs(player: ServerPlayer, page: Int = 0) {
+        require(mod.admin(player.createCommandSourceStack()))
+        val entries = mod.npcs.records.values.filterNot { it.removed }.sortedBy { it.id }
+        val buttons = entries.drop(page * 45).take(45).mapIndexed { i, r ->
+            i to Button(Items.PLAYER_HEAD, "${r.id} → ${r.trainer ?: "sem treinador"}") { npcAdmin(player, r.id) }
+        }.toMap().toMutableMap()
+        if (page > 0) buttons[45] = Button(Items.ARROW, "Anterior") { npcs(player, page - 1) }
+        if (entries.size > (page + 1) * 45) buttons[53] = Button(Items.ARROW, "Próxima") { npcs(player, page + 1) }
+        buttons[46] = Button(Items.ARMOR_STAND, "Criar NPC na minha posição") {
+            player.closeContainer()
+            player.sendSystemMessage(Component.literal("/traineradmin npc create <npc> <treinador>"))
+        }
+        buttons[47] = Button(Items.LEAD, "Vincular NPC existente por clique") {
+            player.closeContainer()
+            player.sendSystemMessage(Component.literal("/traineradmin npc select <novo_id_npc> <treinador> — depois clique no NPC (60s)"))
+        }
+        buttons[48] = Button(Items.SHEARS, "Desvincular por clique") {
+            player.closeContainer(); mod.npcs.command(player.createCommandSourceStack(), "unselect")
+        }
+        buttons[49] = Button(Items.ARROW, "Voltar") { list(player, true) }
+        buttons[50] = Button(Items.BOOK, "Comandos e ajuda") { player.sendSystemMessage(Component.literal(TrainerNpcs.HELP)) }
+        open(player, "NPCs Cobblemon", buttons, true)
+    }
+    private fun npcAdmin(player: ServerPlayer, id: String) {
+        require(mod.admin(player.createCommandSourceStack()))
+        val r = mod.npcs.records[id]?.takeUnless { it.removed } ?: error("NPC removido")
+        fun run(args: String) { mod.npcs.command(player.createCommandSourceStack(), args) }
+        fun hint(action: String, syntax: String) {
+            player.closeContainer()
+            player.sendSystemMessage(Component.literal("/traineradmin npc $action $id $syntax"))
+        }
+        val buttons = mutableMapOf(
+            0 to Button(Items.PAPER, "Consultar UUID, mundo e aparência") { run("show $id") },
+            1 to Button(Items.NAME_TAG, "Editar nome") { hint("name", "<nome>") },
+            2 to Button(Items.PLAYER_HEAD, "Aparência: classe") { run("classes"); hint("class", "<namespace:classe>") },
+            3 to Button(Items.PAINTING, "Aparência: recurso") { hint("resource", "<namespace:recurso|default>") },
+            4 to Button(Items.LEATHER, "Aparência: skin PNG local") { hint("skin", "<arquivo.png> default|slim") },
+            5 to Button(Items.DIAMOND, "Aparência: aspectos") { hint("aspects", "<aspecto1,aspecto2|clear>") },
+            9 to Button(Items.COMPASS, "Mover para minha posição e mundo") { run("move $id") },
+            10 to Button(Items.CLOCK, "Girar") { hint("rotate", "<yaw> [pitch]") },
+            11 to Button(Items.ANVIL, "Parar movimentação") { run("stationary $id true") },
+            12 to Button(Items.FEATHER, "Permitir movimentação nativa") { run("stationary $id false") },
+            18 to Button(Items.BOOK, "Mensagem de interação") { hint("message", "<mensagem>") },
+            19 to Button(Items.WRITABLE_BOOK, "Texto de confirmação") { hint("confirmation", "<texto>") },
+            20 to Button(Items.LIME_DYE, "Confirmação: ${r.confirm}") { run("confirm $id ${!r.confirm}"); npcAdmin(player, id) },
+            27 to Button(Items.IRON_SWORD, "Treinador: ${r.trainer ?: "nenhum"}") {
+                choose(player, "Vincular treinador", mod.trainers.values.sortedBy { it.id }.map { it.id to it.name },
+                    { npcAdmin(player, id) }, { run("link $id $it"); npcAdmin(player, id) })
+            },
+            28 to Button(Items.SHEARS, "Desvincular, preservando entidade") { run("unlink $id"); npcs(player) },
+            49 to Button(Items.ARROW, "Voltar") { npcs(player) }
+        )
+        if (r.owned) buttons[35] = Button(Items.BARRIER, "Remover NPC próprio") {
+            open(player, "Remover NPC $id?", mapOf(
+                20 to Button(Items.RED_DYE, "Confirmar remoção (treinador e progresso preservados)") { run("remove $id"); npcs(player) },
+                24 to Button(Items.ARROW, "Cancelar") { npcAdmin(player, id) }
+            ), true)
+        }
+        open(player, "NPC $id", buttons, true)
     }
     private fun difficulties(player: ServerPlayer, trainer: Trainer, page: Int = 0) {
         val buttons = trainer.difficulties.drop(page * 45).take(45).mapIndexed { i, d -> i to Button(Items.IRON_SWORD, d.id) {

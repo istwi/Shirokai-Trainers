@@ -189,3 +189,7 @@ Para inserir outro Pokémon, use `input append <blank>` antes do cabeçalho dele
 Arquivos ficam em `config/shirokai_trainers/`. Dados de jogador usam UUID. Backups preservam versões anteriores e não são apagados automaticamente.
 
 Para entregas em `IN_FLIGHT` ou `NEEDS_REVIEW`, confira logs/inventário antes de `retry_confirm`; repetir um comando externo não idempotente pode duplicar efeitos. Entregas sem espaço que continuam PENDING usam `/trainerclaim` normalmente.
+
+## NPCs nativos
+
+`/traineradmin npc` fornece criação, vínculo por clique e administração de NPCs do Cobblemon 1.8.3 com `shirokai.admin`. Jogadores comuns desafiam pelo clique sem OP. Consulte a [referência completa e exemplo](npcs-cobblemon.md). Os comandos administrativos de batalha existentes são preservados.

@@ -69,7 +69,8 @@ class TrainerCommands(private val mod: ShirokaiTrainers) {
             return input.text.toString()
         }
         when (action) {
-            "help" -> source.sendSystemMessage(Component.literal(HELP))
+            "npc" -> mod.npcs.command(source, text)
+            "help" -> source.sendSystemMessage(Component.literal(HELP + "\n" + TrainerNpcs.HELP))
             "create" -> {
                 val id = text.trim(); require(id !in mod.trainers) { "ID já existe" }
                 mod.save(Trainer(id), actor)
@@ -284,7 +285,7 @@ class TrainerCommands(private val mod: ShirokaiTrainers) {
     }
     data class TeamTemplate(val team: List<PokemonSpec>)
     companion object {
-        val ACTIONS = listOf("help", "create", "edit", "name", "config", "show", "input", "team", "pokemon", "remove", "copy", "difficulty", "settings", "requirements", "rewardgroup", "reward", "rewardremove", "dialogue", "import", "export", "template", "battle", "data", "reset", "objective", "delivery", "claim", "reload", "retryresults", "debug")
+        val ACTIONS = listOf("npc", "help", "create", "edit", "name", "config", "show", "input", "team", "pokemon", "remove", "copy", "difficulty", "settings", "requirements", "rewardgroup", "reward", "rewardremove", "dialogue", "import", "export", "template", "battle", "data", "reset", "objective", "delivery", "claim", "reload", "retryresults", "debug")
         val HELP = """
             /traineradmin create <id> | edit <id> | name <id> <nome>
             /traineradmin team <id> <dificuldade> add|clear

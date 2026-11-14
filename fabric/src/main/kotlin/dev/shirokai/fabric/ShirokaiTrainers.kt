@@ -33,6 +33,7 @@ class ShirokaiTrainers : ModInitializer {
         log.error("JSON inválido preservado em {}; backup anterior carregado", path, error)
     }
     val ledger = BattleLedger(store)
+    val npcs = TrainerNpcs(this)
     var trainers: Map<String, Trainer> = emptyMap()
         private set
     var debug = false
@@ -41,6 +42,8 @@ class ShirokaiTrainers : ModInitializer {
     private val pendingStarts = mutableMapOf<UUID, Long>()
     private var snapshotTicks = 0
     override fun onInitialize() {
+        npcs.register()
+        ServerLifecycleEvents.SERVER_STARTING.register { s -> server = s; npcs.load() }
         ServerLifecycleEvents.SERVER_STARTED.register { s ->
             server = s; reload()
             log.info("Recuperação de batalhas: {} registros", ledger.recover())

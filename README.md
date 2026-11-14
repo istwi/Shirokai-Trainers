@@ -4,7 +4,7 @@ Mod **server-side** para **Minecraft 1.21.1 / Fabric / Cobblemon 1.8.3**, implem
 
 **Links rápidos:** [baixar na Release](https://github.com/istwi/Shirokai-Trainers/releases/tag/v0.2.2) · [comandos e permissões](docs/comandos-e-permissoes.md) · [guia de testes](docs/guia-testes.md).
 
-**Em validação. Não é uma versão concluída para servidor público.** Os testes automatizados do núcleo e a compilação passaram; o roteiro de aceitação com clientes, batalhas completas e EasyNPC ainda precisa ser executado. Consulte [a investigação das APIs](docs/investigacao-apis.md) e [o roteiro de validação](docs/validacao.md).
+**Em validação. Não é uma versão concluída para servidor público.** Os testes automatizados do núcleo e a compilação passaram; o roteiro de aceitação com clientes e batalhas completas ainda precisa ser executado. A integração nova de NPCs tem validação Fabric pendente de acesso aos repositórios de dependências; consulte [o estado e roteiro dos NPCs](docs/npcs-cobblemon.md). Consulte [a investigação das APIs](docs/investigacao-apis.md) e [o roteiro de validação](docs/validacao.md).
 
 ## Compilar
 
@@ -17,7 +17,7 @@ Necessário **JDK 21** (incluindo `javac`).
 
 O JAR instalável fica em `fabric/build/libs/shirokai-trainers-0.2.2.jar`. Requisitos de servidor: Fabric Loader >=0.17.2, Fabric API >=0.116.6+1.21.1, Fabric Language Kotlin >=1.13.6+kotlin.2.2.20 e Cobblemon **1.8.3+1.21.1**. A API de permissões e o núcleo são incluídos no JAR. Não instale Cobblemon Trainer Battle; ele não é uma dependência.
 
-Clientes precisam do Minecraft e Cobblemon compatíveis, **sem instalar Shirokai Trainers**. EasyNPC e LuckPerms são opcionais. O mod não integra nem cria NPCs: configure seu NPC e suas ações no EasyNPC separadamente.
+Clientes precisam do Minecraft e Cobblemon compatíveis, **sem instalar Shirokai Trainers**. NPCs nativos podem ser criados ou vinculados pelo mod, sem EasyNPC. Consulte [NPCs Cobblemon: comandos, aparência, persistência e validação](docs/npcs-cobblemon.md). LuckPerms continua opcional.
 
 Use o checkout existente da tarefa em nuvem; não crie worktrees adicionais. Em redes gerenciadas, mantenha o proxy e configure as propriedades Java de proxy/CA conforme o ambiente; não desabilite TLS. O wrapper verifica o SHA-256 da distribuição Gradle.
 
@@ -42,7 +42,7 @@ O diretório de desenvolvimento é `fabric/run/`, ignorado pelo Git. O servidor 
 /traineradmin dialogue brock win &aMuito bem!|&eVolte para uma revanche.
 ```
 
-Para iniciar a luta de um jogador, use como administrador ou console: `/traineradmin <jogador> battle <id_da_luta>`. Também é aceita a ordem `/traineradmin battle <jogador> <id_da_luta>`. Configure o EasyNPC para executar esse comando como console/servidor, substituindo `<jogador>` pelo jogador que clicou no NPC. O EasyNPC continua responsável pelo clique, diálogo e aparência; este mod apenas cria e executa a batalha normal do Cobblemon.
+Para iniciar a luta de um jogador, use como administrador ou console: `/traineradmin <jogador> battle <id_da_luta>`. Também é aceita a ordem `/traineradmin battle <jogador> <id_da_luta>`. Os comandos existentes continuam disponíveis. Para usar NPC nativo, crie `/traineradmin npc create brock_npc brock` na sua posição ou vincule um existente com `/traineradmin npc select brock_externo brock` e clique nele. Jogadores comuns podem clicar e confirmar o desafio pelo mesmo serviço de batalha; não precisam de OP. `/traineradmin` → **NPCs Cobblemon** permite administrar os vínculos e entidades.
 
 O menu permite adicionar/remover Pokémon, escolher espécie, forma, Nature, Ability, movimentos e item em seletores paginados, ajustar nível, Shiny, IVs e EVs e copiar Pokémon para outra equipe. Também permite alternar dificuldades e configurar cooldown, IA, ginásio e simultaneidade. **Simultâneas** vem ativado: cada execução do comando para jogadores diferentes cria uma batalha, recompensas e cooldown próprios. O comando `pokemon`, com JSON, continua disponível como alternativa. Texto livre usa comandos, e não campos fictícios de inventário.
 
