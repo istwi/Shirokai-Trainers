@@ -1,4 +1,4 @@
-name: Build native NPCs prerelease
+name: Build native NPCs JAR
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: native-npcs-v0.3.0
@@ -33,14 +33,10 @@ jobs:
           cp docs/npcs-cobblemon.md release-assets/NPCS-COBBLEMON.md
           cd release-assets
           sha256sum shirokai-trainers-0.3.0.jar > shirokai-trainers-0.3.0.jar.sha256
-      - name: Publish prerelease after successful build
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          if ! gh release view v0.3.0 >/dev/null 2>&1; then
-            gh release create v0.3.0 --target "$GITHUB_SHA" --title 'Shirokai Trainers 0.3.0 — NPCs nativos' --notes-file docs/release-v0.3.0.md --draft --prerelease
-          fi
-          gh release upload v0.3.0 release-assets/* --clobber
-          gh release edit v0.3.0 --target "$GITHUB_SHA" --title 'Shirokai Trainers 0.3.0 — NPCs nativos' --notes-file docs/release-v0.3.0.md --draft=false --prerelease
+      - name: Upload JAR to Actions
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: shirokai-trainers-0.3.0
+          path: release-assets/*
+          if-no-files-found: error
+          retention-days: 30
