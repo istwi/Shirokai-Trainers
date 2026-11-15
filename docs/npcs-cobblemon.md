@@ -30,7 +30,7 @@ Tudo requer `shirokai.admin` (fallback OP nível 2), inclusive cada ação de me
 | `link <npc> <treinador>` | Altera vínculo de um NPC indexado; treinador deve existir |
 | `unlink <npc>` | Externo: retira índice, preserva entidade. Próprio: mantém entidade/índice sem treinador |
 | `remove <npc>` | Remove somente entidade criada pelo Trainers, preservando treinador e progresso |
-| `name <npc> <nome com espaços>` | Nome exibido |
+| `name <npc> <nome com espaços>` | Nome exibido; aceita cores `&0`–`&f`, estilos `&k`–`&o` e reset `&r` |
 | `class <npc> <namespace:classe>` | Classe carregada pelo Cobblemon; preserva nome |
 | `resource <npc> <namespace:recurso\|default>` | Recurso de aparência ou retorno ao recurso da classe |
 | `aspects <npc> <aspecto1,aspecto2\|clear>` | Substitui aspectos aplicados; variações da classe continuam presentes |
@@ -105,6 +105,7 @@ Como administrador:
 /traineradmin reward blue normal win fixas aviso {"kind":"COMMAND","value":"tellraw %player% {\"text\":\"Vitória contra Blue!\"}","chance":100}
 /traineradmin npc create blue_npc blue
 /traineradmin npc name blue_npc Blue
+/traineradmin npc name blue_npc &5&lBlue
 /traineradmin npc class blue_npc cobblemon:standard
 /traineradmin npc skin blue_npc blue.png default
 /traineradmin npc message blue_npc Sou Blue. Quer me desafiar?

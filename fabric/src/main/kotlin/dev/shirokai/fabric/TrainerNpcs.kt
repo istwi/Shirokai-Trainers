@@ -200,7 +200,7 @@ class TrainerNpcs(private val mod: ShirokaiTrainers) {
             "name", "class", "resource", "aspects", "stationary", "move", "rotate" -> {
                 val r = record(id); val npc = entity(r)
                 when (action) {
-                    "name" -> { require(value.isNotBlank() && value.length <= 200); npc.customName = Component.literal(value) }
+                    "name" -> { require(value.isNotBlank() && value.length <= 200); npc.customName = formattedNpcName(value) }
                     "class" -> {
                         val name = npc.customName
                         npc.npc = NPCClasses.getByIdentifier(ResourceLocation.parse(value)) ?: error("Classe NPC inexistente; use npc classes")

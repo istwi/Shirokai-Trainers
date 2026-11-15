@@ -156,7 +156,7 @@ class ShirokaiTrainers : ModInitializer {
         d.requirements.missing(ctx)?.let { say(player, t, "requirements"); error(it) }
         val previous = ctx.progress.trainers[id]
         val remaining = (previous?.cooldowns?.get(d.id) ?: 0) - System.currentTimeMillis()
-        if (remaining > 0) { say(player, t, "cooldown"); error("Aguarde ${(remaining + 999) / 1000}s") }
+        if (remaining > 0) { say(player, t, "cooldown"); error("Aguarde ${formatDuration((remaining + 999) / 1000)}") }
         require(d.team.isNotEmpty()) { "Equipe do treinador ainda não configurada" }
         val party = Cobblemon.storage.getParty(player)
         val team = party.toBattleTeam()

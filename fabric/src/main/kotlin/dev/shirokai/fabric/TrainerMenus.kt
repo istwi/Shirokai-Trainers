@@ -157,7 +157,7 @@ class TrainerMenus(private val mod: ShirokaiTrainers) {
         if (d.team.size < 6) buttons[16] = Button(Items.EMERALD, "Adicionar Pokémon") {
             save(t.copy(difficulties = t.difficulties.map { if (it.id == d.id) it.copy(team = it.team + PokemonSpec()) else it }))
         }
-        buttons[28] = Button(Items.CLOCK, "Cooldown: ${d.cooldownSeconds}s (±30)") { button ->
+        buttons[28] = Button(Items.CLOCK, "Cooldown: ${formatDuration(d.cooldownSeconds)} (±30s)") { button ->
             save(t.copy(difficulties = t.difficulties.map { if (it.id == d.id) it.copy(cooldownSeconds = (d.cooldownSeconds + if (button == 0) 30 else -30).coerceIn(0, 315360000)) else it }))
         }
         buttons[29] = Button(Items.COMPARATOR, "Simultâneas: ${t.simultaneous}") { save(t.copy(simultaneous = !t.simultaneous)) }
