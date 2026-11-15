@@ -77,7 +77,7 @@ class TrainerMenus(private val mod: ShirokaiTrainers) {
         require(mod.admin(player.createCommandSourceStack()))
         val entries = mod.npcs.records.values.filterNot { it.removed }.sortedBy { it.id }
         val buttons = entries.drop(page * 45).take(45).mapIndexed { i, r ->
-            i to Button(Items.PLAYER_HEAD, "${r.id} → ${r.trainer ?: "sem treinador"}") { npcAdmin(player, r.id) }
+            i to Button(Items.PLAYER_HEAD, "${r.id} → ${r.trainer ?: if (r.clickCommand != null) "comando" else "sem treinador"}") { npcAdmin(player, r.id) }
         }.toMap().toMutableMap()
         if (page > 0) buttons[45] = Button(Items.ARROW, "Anterior") { npcs(player, page - 1) }
         if (entries.size > (page + 1) * 45) buttons[53] = Button(Items.ARROW, "Próxima") { npcs(player, page + 1) }
@@ -93,6 +93,10 @@ class TrainerMenus(private val mod: ShirokaiTrainers) {
             player.closeContainer(); mod.npcs.command(player.createCommandSourceStack(), "unselect")
         }
         buttons[49] = Button(Items.ARROW, "Voltar") { list(player, true) }
+        buttons[51] = Button(Items.COMMAND_BLOCK, "Criar NPC de comandos, sem treinador") {
+            player.closeContainer()
+            player.sendSystemMessage(Component.literal("/traineradmin npc create-command <npc>"))
+        }
         buttons[50] = Button(Items.BOOK, "Comandos e ajuda") { player.sendSystemMessage(Component.literal(TrainerNpcs.HELP)) }
         open(player, "NPCs Cobblemon", buttons, true)
     }
@@ -128,6 +132,13 @@ class TrainerMenus(private val mod: ShirokaiTrainers) {
             28 to Button(Items.SHEARS, "Desvincular, preservando entidade") { run("unlink $id"); npcs(player) },
             49 to Button(Items.ARROW, "Voltar") { npcs(player) }
         )
+        if (r.trainer == null) {
+            listOf(18, 19, 20).forEach { buttons.remove(it) }
+            buttons[30] = Button(Items.COMMAND_BLOCK, "Comando: ${r.clickCommand?.executor ?: "nenhum"}") {
+                hint("command", "player|console <comando sem />; placeholders: %player%, %player_uuid%")
+            }
+            buttons[31] = Button(Items.BARRIER, "Remover comando de clique") { run("clear-command $id"); npcAdmin(player, id) }
+        }
         if (r.owned) buttons[35] = Button(Items.BARRIER, "Remover NPC próprio") {
             open(player, "Remover NPC $id?", mapOf(
                 20 to Button(Items.RED_DYE, "Confirmar remoção (treinador e progresso preservados)") { run("remove $id"); npcs(player) },

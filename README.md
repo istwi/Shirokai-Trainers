@@ -44,6 +44,13 @@ O diretório de desenvolvimento é `fabric/run/`, ignorado pelo Git. O servidor 
 
 Para iniciar a luta de um jogador, use como administrador ou console: `/traineradmin <jogador> battle <id_da_luta>`. Também é aceita a ordem `/traineradmin battle <jogador> <id_da_luta>`. Os comandos existentes continuam disponíveis. Para usar NPC nativo, crie `/traineradmin npc create brock_npc brock` na sua posição ou vincule um existente com `/traineradmin npc select brock_externo brock` e clique nele. Jogadores comuns podem clicar e confirmar o desafio pelo mesmo serviço de batalha; não precisam de OP. `/traineradmin` → **NPCs Cobblemon** permite administrar os vínculos e entidades.
 
+Para criar um NPC independente que executa comando ao clique direito, use
+`/traineradmin npc create-command portal` e depois
+`/traineradmin npc command portal console tp %player% 100 70 200`.
+Para abrir um menu de outro mod com as permissões de quem clicou, use
+`/traineradmin npc command portal player <comando_do_menu>` (sem `/` no comando).
+Esses NPCs não precisam de treinador; os NPCs de batalha mantêm o fluxo existente.
+
 O menu permite adicionar/remover Pokémon, escolher espécie, forma, Nature, Ability, movimentos e item em seletores paginados, ajustar nível, Shiny, IVs e EVs e copiar Pokémon para outra equipe. Também permite alternar dificuldades e configurar cooldown, IA, ginásio e simultaneidade. **Simultâneas** vem ativado: cada execução do comando para jogadores diferentes cria uma batalha, recompensas e cooldown próprios. O comando `pokemon`, com JSON, continua disponível como alternativa. Texto livre usa comandos, e não campos fictícios de inventário.
 
 `pokemon` recebe um objeto Pokémon completo, aplicando defaults aos campos omitidos. `config` recebe uma configuração de treinador completa, obtida com `show`. Mudanças são validadas antes de salvar, incluindo consulta aos registros reais do Cobblemon, e criação de um Pokémon de validação. Equipes de jogadores não são substituídas ou niveladas pelo mod.

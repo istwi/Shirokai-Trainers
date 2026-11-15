@@ -95,6 +95,21 @@ class TrainerNpcs(private val mod: ShirokaiTrainers) {
                     player.sendSystemMessage(Component.literal("§aVínculo atualizado."))
                 } else if (linked != null) {
                     require(!linked.removed) { "NPC removido; aguardando limpeza da entidade" }
+                    if (linked.trainer == null) {
+                        require(player.isAlive && !player.isSpectator) { "Não é possível interagir nesse estado" }
+                        val now = System.currentTimeMillis()
+                        if (now - (clickTimes[player.uuid] ?: 0L) >= 750) {
+                            clickTimes[player.uuid] = now
+                            linked.clickCommand?.let { configured ->
+                                val source = if (configured.executor == "player") player.createCommandSourceStack()
+                                    else mod.server.createCommandSourceStack().withPermission(4)
+                                        .withLevel(player.serverLevel()).withPosition(player.position())
+                                mod.server.commands.performPrefixedCommand(source,
+                                    configured.render(player.scoreboardName, player.uuid))
+                            }
+                        }
+                        return@register InteractionResult.SUCCESS
+                    }
                     val trainerId = linked.trainer ?: error("NPC sem treinador vinculado")
                     trainer(trainerId)
                     require(player.isAlive && !player.isSpectator) { "Não é possível desafiar nesse estado" }
@@ -142,7 +157,7 @@ class TrainerNpcs(private val mod: ShirokaiTrainers) {
             "", "help" -> source.sendSystemMessage(Component.literal(HELP))
             "menu" -> TrainerMenus(mod).npcs(source.playerOrException)
             "list" -> source.sendSystemMessage(Component.literal(records.values.joinToString("\n") {
-                "${it.id} → ${it.trainer ?: "sem vínculo"} [${if (it.removed) "removido" else if (it.owned) "próprio" else "externo"}] ${it.dimension} (${it.x}, ${it.y}, ${it.z})"
+                "${it.id} → ${it.trainer ?: if (it.clickCommand != null) "comando (${it.clickCommand?.executor})" else "sem vínculo"} [${if (it.removed) "removido" else if (it.owned) "próprio" else "externo"}] ${it.dimension} (${it.x}, ${it.y}, ${it.z})"
             }.ifEmpty { "Nenhum NPC registrado" }))
             "classes" -> source.sendSystemMessage(Component.literal(NPCClasses.classes.joinToString { it.id.toString() }))
             "cancel" -> selections.remove(source.playerOrException.uuid)
@@ -156,9 +171,12 @@ class TrainerNpcs(private val mod: ShirokaiTrainers) {
                 selections[source.playerOrException.uuid] = Selection(null, null, System.currentTimeMillis() + 60000)
                 source.sendSystemMessage(Component.literal("Clique no NPC para desvincular (60s)."))
             }
-            "create" -> {
+            "create", "create-command" -> {
                 val p = source.playerOrException
-                require(validId(id) && id !in records) { "ID inválido ou já usado" }; trainer(value)
+                require(validId(id) && id !in records) { "ID inválido ou já usado" }
+                val trainerId = if (action == "create") value.also { trainer(it) } else {
+                    require(value.isEmpty()) { "create-command <npc> não recebe treinador" }; null
+                }
                 val npcClass = NPCClasses.getByIdentifier(ResourceLocation.parse("cobblemon:standard"))
                     ?: error("Classe cobblemon:standard indisponível; verifique os datapacks")
                 val npc = NPCEntity(p.serverLevel())
@@ -167,7 +185,7 @@ class TrainerNpcs(private val mod: ShirokaiTrainers) {
                 npc.yHeadRot = p.yRot; npc.yBodyRot = p.yRot
                 npc.setPersistenceRequired(); npc.setNoAi(true); npc.isMovable = false
                 npc.setNoGravity(true); npc.isInvulnerable = true
-                val r = TrainerNpc(id, npc.uuid, true, value, p.serverLevel().dimension().location().toString(), p.x, p.y, p.z)
+                val r = TrainerNpc(id, npc.uuid, true, trainerId, p.serverLevel().dimension().location().toString(), p.x, p.y, p.z)
                 put(r) // Reserve identity before spawn; a crash leaves a visible missing record, never a duplicate.
                 check(p.serverLevel().addFreshEntity(npc)) { "Não foi possível criar entidade; índice preservado para diagnóstico" }
             }
@@ -177,7 +195,24 @@ class TrainerNpcs(private val mod: ShirokaiTrainers) {
                     .getOrElse { it.message.orEmpty() }
                 source.sendSystemMessage(Component.literal(mod.gson.toJson(r) + "\n" + status))
             }
-            "link" -> { trainer(value); put(record(id).copy(trainer = value)) }
+            "command" -> {
+                val r = record(id)
+                require(r.trainer == null) { "NPC de batalha: use outro NPC independente" }
+                val parts = value.split(Regex("\\s+"), limit = 2)
+                require(parts.size == 2) { "command <npc> player|console <comando sem />" }
+                val configured = NpcClickCommand(parts[0], parts[1]); configured.validate()
+                val rendered = configured.render(source.player?.scoreboardName ?: "Validation", UUID(0, 0))
+                val parsed = mod.server.commands.dispatcher.parse(rendered, mod.server.createCommandSourceStack())
+                require(!parsed.reader.canRead() && parsed.context.build(rendered).lastChild.command != null) { "Comando inválido" }
+                put(r.copy(clickCommand = configured))
+            }
+            "clear-command" -> put(record(id).copy(clickCommand = null))
+            "link" -> {
+                trainer(value)
+                val r = record(id)
+                require(r.clickCommand == null) { "Remova o comando com clear-command antes de vincular treinador" }
+                put(r.copy(trainer = value))
+            }
             "unlink" -> unlink(id)
             "remove" -> {
                 val r = record(id); require(r.owned) { "NPC externo: use unlink; entidade será preservada" }
@@ -322,6 +357,9 @@ class TrainerNpcs(private val mod: ShirokaiTrainers) {
         val HELP = """
             /traineradmin npc menu|list|classes|help
             /traineradmin npc create <npc> <treinador> | select <npc> <treinador>
+            /traineradmin npc create-command <npc>
+            /traineradmin npc command <npc> player|console <comando sem />
+            /traineradmin npc clear-command <npc>
             /traineradmin npc unselect|cancel
             /traineradmin npc show|unlink|remove|move <npc>
             /traineradmin npc link <npc> <treinador>
