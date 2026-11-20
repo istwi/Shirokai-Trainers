@@ -21,7 +21,7 @@ routes=json.loads((root/'biomes/routes.json').read_text())
 for cave in routes['cave_entrances']:
     for point in [cave['entrance'],cave['chamber']]:
         x,y,z=point;actual=str(names[int(b3[(y+64)//4,(z+752)//4,(x+752)//4])]);assert actual==cave['biome'],(point,actual)
-        assert a[y+64,z+752,x+752]==0,(point,'headroom obstructed')
+        assert a[y+64,z+752,x+752] in [0,palette.index('minecraft:torch')],(point,'headroom obstructed')
         assert a[y+65,z+752,x+752]==0,(point,'second headroom obstructed')
         checked.append({'point':point,'biome':actual})
 report={'passed':True,'trees':len(trees),'species':sorted({t['species'] for t in trees}),'cherry_height_values':sorted({t['height'] for t in cherries}),'cherry_canopy_radius_values':sorted({t['radius'] for t in cherries}),'position_mod7_entropy_bits':entropy,'lakes':len(lake_results),'minimum_water_or_ice_blocks_in_lake_center_window':min(lake_results),'cave_chambers':len(features['cave_chambers']),'cave_biomes_at_entrances_and_landings':checked,'scope':'Checks real generated data, not Minecraft client rendering.'}

@@ -1,29 +1,21 @@
-# Shirokai Safari Zone V4 — Minecraft Java 1.21.1
+# Shirokai Safari Zone V5 — Minecraft Java 1.21.1
 
 Mapa procedural real de 1.500 × 1.500 blocos para uso com Fabric/Cobblemon 1.8.3. Entrega de teste: arquivos gerados e verificados em disco, ainda sem homologação dentro do servidor do operador.
 
-## Redesenho V4
+## Revisão V5 — sem hub construído e sem trilhas pintadas nas cavernas
 
-A ilha usa uma única rota, com guarda-corpos de abeto, postes de tronco descascado, lanternas e alçapões de acabamento. Foram removidos os grandes tablados isolados da montanha e as duas fontes/cachoeiras retangulares. As quatro saídas principais partem dos eixos do hub. A floresta passa a privilegiar o chão de grama, mantendo manchas de terra e vegetação por habitat. Os troncos caídos são colocados apenas em trechos planos.
+O centro é uma clareira plana de grama entre X/Z=-60 e 60, com piso em Y=76 e entrada em `(0,77,0)`. Não contém portal, prédios, praça, placas ou decorações de spawn. O relevo se integra ao entorno por uma faixa de transição gradual. Essa é a área disponível para as construções do operador.
 
-As salas das cavernas estão mais próximas, com maior área útil de piso e musgo em manchas contínuas na lush cave. A ligação longa e sem destino entre os dois sistemas foi removida. Foram acrescentadas tochas apoiadas no chão junto das rotas. Os lagos ficam em depressões rasas delimitadas pela borda rochosa, em vez de poços profundos.
+As cavernas mantêm passagens naturais, iluminação e biomas reais; não recebem as faixas artificiais de musgo/dripstone que marcavam os antigos trajetos. Só os acessos externos têm adaptação de desnível para manter entrada caminhável; o piso usa o mesmo material do habitat ao redor. As entradas recebem tratamento sobre a rocha existente, sem pórticos ou paredes artificiais.
 
-## Correções de sustentação V4
+Fundos de lagos e rios recebem pedra, cascalho, argila e areia por profundidade e habitat; a grama submersa é substituída em toda a área tratada. As bordas de solo são misturadas em faixas irregulares e não alteram os IDs reais dos biomas. A água pode mudar de cor entre biomas porque essa coloração é nativa do Minecraft, mesmo com os materiais do leito misturados.
 
-Pisos das cavernas acompanham o chão rochoso e recebem preenchimento até o terreno. Os caminhos de terra têm fundação; pontes e mirantes têm pilares. Árvores terrestres são excluídas da água e de uma faixa de cinco blocos ao redor. Margens recebem sedimentos, pedras e cana junto da água; o vale do rio tem transições mais amplas. Essas verificações se somam à navegação: uma rota caminhável sozinha não comprova sustentação nem aparência natural.
-
-## Revisão visual V4
-
-Esta revisão substitui as árvores cônicas e o espaçamento em grade da V1 por árvores ramificadas, com inclinações, alturas e copas diferentes por espécie. A posição é sorteada e a densidade varia por manchas, deixando clareiras. Acrescenta 27 lagos de contorno irregular, arbustos, grama alta, samambaias, pétalas de cerejeira, solos de podzol/terra infértil/terra enraizada e afloramentos de pedra/andesito. Os caminhos usam rotas que penalizam encostas íngremes e têm mistura de materiais nas bordas.
-
-As cavernas agora têm 12 câmaras conectadas e duas entradas amplas, com passagens sinuosas em três dimensões. A lush cave recebe musgo, argila, azaleias e vinhas com bagas luminosas; a dripstone cave recebe espeleotemas, calcita e pontos de líquen luminoso. Os lagos subterrâneos são escavados abaixo da borda rochosa. Os IDs reais de bioma acompanham o volume escavado, inclusive as entradas elevadas.
-
-A aparência ainda é uma geração procedural personalizada. Os testes dos arquivos e de navegação não substituem inspeção no cliente do Minecraft; não foi feita uma nova captura em jogo da V4 neste ambiente.
+Mantém as pontes detalhadas, vegetação e as 12 câmaras; acrescenta agrupamentos de samambaias e formações minerais fora dos corredores livres. Os arquivos e a navegação são testados, mas o aspecto desta revisão ainda não foi inspecionado em um cliente Minecraft neste ambiente.
 
 ## Conteúdo
 
 - `world/safari/`: mundo Anvil, `level.dat`, 8.836 chunks e todos os 26 biomas nativos. Spawn `(0,77,0)`.
-- `schematics/`: 36 regiões contínuas de 250 × 320 × 250 blocos, mais o hub de 120 × 48 × 120. Os limites verticais dos terrenos exportados são Y=-64 a 255; nenhum bloco construído ultrapassa esse volume.
+- `schematics/`: 36 regiões contínuas de 250 × 320 × 250 blocos, mais a clareira de 120 × 48 × 120. Os limites verticais dos terrenos exportados são Y=-64 a 255; nenhum bloco construído ultrapassa esse volume.
 - `schematics/manifest.json`: posição exata do canto mínimo de cada parte e dimensões.
 - `biomes/biome_coordinates.json`: pontos de visita e áreas aproximadas dos biomas superficiais; consulte também as entradas de caverna em `routes.json`.
 - `biomes/biome_restore/`: matriz real dos biomas por células 4³ e restaurador offline com backup.
@@ -31,7 +23,7 @@ A aparência ainda é uma geração procedural personalizada. Os testes dos arqu
 - `validation/`: relatórios dos arquivos e da navegação.
 - `generator/`: código completo, dependências fixadas e testes; não exige a mod Shirokai Trainers.
 
-O retângulo autoral é X/Z=-750..749. Chunks inteiros incluem margem adicional até -752..751. Fora disso, o gerador do mundo standalone produz oceano plano. É preferível conservar esse gerador ao importar o mundo completo, evitando emendas com outro terreno. O hub usa carvalho/abeto, pedra, ciano e branco. Contém recepção, informações, portal com letras em blocos, jardins, lagos, passarelas, bancos, iluminação e espaços sinalizados para NPCs, hologramas e retorno. Esses espaços não executam menus, não contêm NPCs reais e não configuram teleporte automaticamente.
+O retângulo autoral é X/Z=-750..749. Chunks inteiros incluem margem adicional até -752..751. Fora disso, o gerador do mundo standalone produz oceano plano. É preferível conservar esse gerador ao importar o mundo completo, evitando emendas com outro terreno. O hub construído foi removido por solicitação do operador. O centro contém somente terreno disponível para construir. Nenhum NPC ou teleporte é configurado automaticamente.
 
 ## Atualizar a Safari já instalada no seu Multiworld
 
@@ -40,7 +32,7 @@ O JAR fornecido pelo operador foi identificado como **Multiworld de Isaiah, bund
 1. Saia da dimensão Safari e pare completamente o servidor.
 2. Faça uma cópia de segurança de `world/dimensions/multiworld/safari/`. Se `level-name` do `server.properties` tiver outro valor, use esse nome no lugar de `world`.
 3. Renomeie a pasta `region` existente para `region-v1-backup`, sem apagá-la.
-4. Copie **somente** a pasta `world/safari/region` deste pacote V4 para `world/dimensions/multiworld/safari/region`. Não misture arquivos region de versões diferentes e não substitua o `level.dat` do mundo principal.
+4. Copie **somente** a pasta `world/safari/region` deste pacote V5 para `world/dimensions/multiworld/safari/region`. Não misture arquivos region de versões diferentes e não substitua o `level.dat` do mundo principal.
 5. Inicie o servidor e, dentro do jogo como administrador, use `/mw tp safari`, `/tp @s 0 77 0` e, se necessário, `/mw setspawn`.
 
 Isso substitui o terreno e construções existentes na dimensão Safari. NPCs/entidades colocados pelo operador não integram este mapa e podem continuar salvos nas pastas `entities` e em índices de outras mods; verifique suas posições. Não copie nem apague dados de jogadores ou de outras dimensões. Se a dimensão ainda não estiver registrada, crie-a primeiro com `/mw create safari normal`, depois pare o servidor e siga a troca da pasta region.
@@ -71,7 +63,7 @@ Use uma build Fabric do WorldEdit compatível com Minecraft 1.21.1 que **leia Sp
    ```
 
    Exemplo: `safari_00_00` usa canto mínimo `(-750,-64,-750)`. `safari_00_01` usa `(-500,-64,-750)`. Todos usam Offset `[0,0,0]`, portanto o ponto de colagem é esse canto, sem depender de uma origem oculta.
-4. Repita por arquivo. O hub separado é opcional; já está incorporado nas 36 partes e no mundo completo. Seu canto é `(-60,64,-60)`.
+4. Repita por arquivo. O schematic da clareira é opcional; já está incorporado nas 36 partes e no mundo completo. Seu canto é `(-60,64,-60)`.
 5. Cada parte completa tem **20 milhões de blocos**. Faça uma de cada vez, sem jogadores no mundo; se o limite de operações impedir, prefira importar o mundo pronto. Não aumente limites de memória às cegas. Não use `-a` para reconstrução completa: o ar é necessário para abrir as cavernas e limpar espaço das construções.
 6. A opção de biomas deve ser efetivamente suportada pela versão instalada. Se `-b` não existir ou os biomas não forem preservados, não presuma sucesso: importe o mundo entregue ou use o restaurador offline.
 
@@ -118,7 +110,7 @@ Verificado: 26 IDs reais em todos os chunks; paletas compatíveis com vanilla 1.
 ### Roteiro do operador
 
 - Carregar o mundo em servidor de testes e verificar o log, sem erros de chunk/registro.
-- Ir ao hub e a cada ponto de `biome_coordinates.json`; conferir F3 e as condições reais dos biomas de caverna.
+- Ir à clareira e a cada ponto de `biome_coordinates.json`; conferir F3 e as condições reais dos biomas de caverna.
 - Percorrer as rotas, pontes, montanhas, acessos subterrâneos e ilha; verificar luz e estabilidade do terreno após atualizações de água/folhagens.
 - Colar uma parte em dimensão descartável com `-b` e comparar blocos, placas e biomas; testar restauração offline nessa cópia.
 - Confirmar que os datapacks do servidor permitem spawns na dimensão `safari`. Bioma sozinho não garante espécie alguma. O mapa oferece superfícies naturais variadas, lagos e águas rasas/profundas, trechos escuros e cavernas, mas não altera regras de spawn.

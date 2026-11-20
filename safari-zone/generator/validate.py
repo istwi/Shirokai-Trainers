@@ -81,9 +81,9 @@ def validate(out,official=None,registry=None):
         blocks_total+=size;schems+=1
     assert schems==37
     report.update(schematics=schems,schematic_blocks_roundtripped=blocks_total,schematic_biomes_roundtripped=blocks_total)
-    report['minecraft_runtime_load']='V1 loaded by operator; V2 not loaded in a Minecraft client/server in this environment.'
+    report['minecraft_runtime_load']='V1 loaded by operator; Current revision not loaded in a Minecraft client/server in this environment.'
     report['worldedit_runtime_paste']='NOT EXECUTED: structurally validated against Sponge v3 specification'
-    report['multiworld_import']='Isaiah Multiworld 1.14.2 identified from supplied JAR; V2 import not executed on operator server.'
+    report['multiworld_import']='Isaiah Multiworld 1.14.2 identified from supplied JAR; Current revision import not executed on operator server.'
     report['cobblemon_spawn']='NOT EXECUTED: depends on server datapacks and conditions'
     (out/'validation/validation.json').write_text(json.dumps(report,indent=2))
     print(json.dumps(report,indent=2))

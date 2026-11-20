@@ -67,7 +67,7 @@ def finish(a,routes,surface,levels,origin,ymin,block,out):
                 side=a[iy:end,iz+dz,ix+dx]
                 if np.any((side!=air)&~np.isin(side,mineral)):attached=True;break
             if not attached:removed+=end-iy;a[iy:end,iz,ix]=air
-    report={'revision':4,'bridge_and_lookout_support_columns':len(supports),'isolated_mineral_blocks_removed':removed,'water_margin_cells':int(shore.sum())}
+    report={'revision':5,'bridge_and_lookout_support_columns':len(supports),'isolated_mineral_blocks_removed':removed,'water_margin_cells':int(shore.sum())}
     (out/'validation/structure_fixes.json').write_text(json.dumps(report,indent=2))
 
 

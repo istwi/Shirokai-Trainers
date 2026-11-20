@@ -86,8 +86,8 @@ def build(out):
     bank=(rd<95)&(~ocean)&(~island)&(X*X+Z*Z>90**2)
     factor=np.clip((rd-7)/88,0,1);factor=factor*factor*(3-2*factor);surface[bank]=59*(1-factor[bank])+surface[bank]*factor[bank]
     biome[river]=BID['river'];surface[river]=58+fine[river]*.6
-    hubr=np.sqrt(X*X+Z*Z); blend=np.clip((hubr-63)/35,0,1)
-    surface=76*(1-blend)+surface*blend;biome[hubr<65]=BID['plains']
+    hubr=np.sqrt(X*X+Z*Z); clearing_distance=np.maximum(np.abs(X),np.abs(Z)); blend=np.clip((clearing_distance-64)/105,0,1);blend=blend*blend*(3-2*blend)
+    surface=76*(1-blend)+surface*blend;biome[clearing_distance<72]=BID['plains']
     surface=gaussian_filter(surface,1.3)
     surface=np.clip(np.rint(surface),31,221).astype(np.int16)
     surface,lake_levels,lake_records=natural.lakes(surface,biome,texture,rng,BID,MIN)
@@ -197,7 +197,7 @@ def build(out):
         if passage['entrance']:
             for x,y,z in passage['points']:route_mask[max(0,z-MIN-3):z-MIN+4,max(0,x-MIN-3):x-MIN+4]=True
     # Tree and decoration passes avoid all walking corridors.
-    forbidden=route_mask.copy();forbidden|=hubr<67
+    forbidden=route_mask.copy();forbidden|=clearing_distance<72
     from scipy.ndimage import binary_dilation
     forbidden=binary_dilation(forbidden,iterations=4)
     tree_types={b:('oak',OAK) for b in ['forest','flower_forest','plains','meadow','savanna','swamp']}
@@ -230,53 +230,17 @@ def build(out):
         for dx in range(-8,9):setb(x+dx,y,z-9,material)
     for b,x,z,h in SITES:
         y=max(64,ground(x,z));sign(x-3,y+1,z,b.upper().replace('_',' ')+'|SHIROKAI SAFARI')
-    # Hub: plaza, ponds, flower gardens, reception and information buildings.
-    cub(-59,76,-59,59,76,59,BRICK);cub(-59,77,-59,59,99,59,AIR)
-    for v in range(-57,58,12):cub(v,76,-57,v,76,57,PLANK)
-    cub(-5,76,-60,5,76,60,WHITE);cub(-60,76,-5,60,76,5,WHITE)
-    for x,z in [(-37,32),(37,32)]:
-        for dx in range(-10,11):
-            for dz in range(-7,8):
-                if dx*dx/100+dz*dz/49<=1:
-                    setb(x+dx,75,z+dz,SAND);setb(x+dx,76,z+dz,WATER)
-        cub(x-1,77,z-10,x+1,77,z+10,PLANK)
-    def house(x0,z0,w,d,label):
-        x1=x0+w;z1=z0+d;cub(x0,76,z0,x1,76,z1,PLANK)
-        for x in [x0,x1]:
-            for z in [z0,z1]:cub(x,77,z,x,83,z,SPRUCE)
-        cub(x0,77,z0,x1,80,z0,WHITE);cub(x0,77,z1,x1,80,z1,WHITE)
-        cub(x0,77,z0,x0,80,z1,WHITE);cub(x1,77,z0,x1,80,z1,WHITE)
-        cub(x0+2,79,z0,x1-2,80,z0,GLASS);cub(x0+2,79,z1,x1-2,80,z1,GLASS)
-        cub(x0+1,81,z0,x1-1,81,z1,CYAN)
-        for k in range(4):cub(x0-2+k,82+k,z0-2+k,x1+2-k,82+k,z1+2-k,PLANK)
-        mx=(x0+x1)//2;cub(mx-1,77,z1,mx+1,80,z1,AIR)
-        cub(x0+3,77,z0+3,x1-3,77,z0+3,SLAB);setb(x0+2,80,z0+2,LIGHT)
-        sign(mx,81,z1+1,label)
-    house(-48,-46,27,20,'INFORMACOES|SHIROKAI SAFARI');house(20,-46,27,20,'RECEPCAO|Bilhetes e menus')
-    # Main entrance arch facing south, with readable block lettering.
-    cub(-20,77,53,-17,91,56,SPRUCE);cub(17,77,53,20,91,56,SPRUCE);cub(-20,90,53,20,93,56,CYAN)
-    font={'A':['01110','10001','10001','11111','10001','10001','10001'],'F':['11111','10000','10000','11110','10000','10000','10000'],'H':['10001','10001','10001','11111','10001','10001','10001'],'I':['11111','00100','00100','00100','00100','00100','11111'],'K':['10001','10010','10100','11000','10100','10010','10001'],'O':['01110','10001','10001','10001','10001','10001','01110'],'R':['11110','10001','10001','11110','10100','10010','10001'],'S':['01111','10000','10000','01110','00001','00001','11110']}
-    for text,ybase in [('SHIROKAI',103),('SAFARI',95)]:
-        start=-(len(text)*6-1)//2
-        for i,ch in enumerate(text):
-            for row,line in enumerate(font[ch]):
-                for col,on in enumerate(line):
-                    if on=='1':setb(start+i*6+col,ybase-row,55,WHITE)
-    sign(-2,78,49,'SHIROKAI SAFARI|Bem-vindo!|Explore os 26 biomas')
-    for x,z,label in [(-13,13,'NPC RECEPCAO'),(13,13,'NPC TELEPORTES'),(0,-16,'HOLOGRAMA'),(42,12,'RETORNO AO SPAWN')]:
-        cub(x-2,76,z-2,x+2,76,z+2,CYAN);sign(x,77,z,label+'|Espaco reservado')
-    for x in [-53,-15,15,53]:
-        for z in [-15,18,48]:lamp(x,77,z)
-    for x,z in [(-24,14),(24,14),(-25,47),(25,47)]:cub(x-3,77,z,x+3,77,z,SLAB)
-    for x,z in [(-53,-52),(53,-52),(-53,52),(53,52)]:
-        cub(x-3,77,z-3,x+3,77,z+3,DIRT)
-        for dx in range(-2,3):
-            for dz in range(-2,3):setb(x+dx,78,z+dz,FLOWERS[(dx+dz)%8])
+    # The operator builds their own hub: leave only a clear grass plateau.
+    cub(-60,77,-60,60,125,60,AIR)
+    cub(-60,76,-60,60,76,60,GRASS)
     natural.repair_route_floors(a,routes,surface,lake_levels,MIN,YMIN,block)
     finish.finish(a,routes,surface,lake_levels,MIN,YMIN,block,out)
     finish.details(a,routes,surface,lake_levels,MIN,YMIN,block,out)
     import design
     design.polish(a,routes,cave_passages,surface,lake_levels,MIN,YMIN,block,out)
+    import ecology
+    ecology.blend_and_detail(a,surface,lake_levels,biome,texture,MIN,YMIN,block,BIOMES,BID,out,cave_marks,cave_passages)
+    tiles=[t for t in tiles if abs(int(t['x']))>60 or abs(int(t['z']))>60]
     # Biome volume, 4x4x4 voxels. Sections use actual registry names.
     quart=biome[::4,::4].copy();b3=np.broadcast_to(quart,(HEIGHT//4,SIZE//4,SIZE//4)).copy()
     # Apply cave biomes exactly where the carved passages and chambers exist, including entrances.
@@ -284,7 +248,7 @@ def build(out):
     np.savez_compressed(out/'biomes/biome_restore/biomes_4x4x4.npz',biomes=b3,names=np.array(BIOMES),origin=np.array([MIN,YMIN,MIN]))
     (out/'biomes/routes.json').write_text(json.dumps({'routes':routes,'cave_entrances':cave_entries,'underground_passages':cave_passages},ensure_ascii=False))
     np.save(out/'surface.work.npy',surface)
-    (out/'biomes/natural_features.json').write_text(json.dumps({'revision':4,'trees':tree_records,'lakes':lake_records,'cave_chambers':cave_chambers}))
+    (out/'biomes/natural_features.json').write_text(json.dumps({'revision':5,'trees':tree_records,'lakes':lake_records,'cave_chambers':cave_chambers}))
     print('Hub, routes, caves, shelters and decorations complete',flush=True)
     export_world(out,a,b3,tiles)
     export_schematics(out,a,b3,tiles)
@@ -366,7 +330,7 @@ def export_schematics(out,a,b3,tiles):
     for rz,z0 in enumerate(range(-750,750,250)):
         for rx,x0 in enumerate(range(-750,750,250)):
             name=f'safari_{rz:02d}_{rx:02d}';export(name,x0,z0,250,250);print('Schematic',name,flush=True)
-    export('safari_hub',-60,-60,120,120,64,48)
+    export('safari_clearing',-60,-60,120,120,64,48)
     (out/'schematics/manifest.json').write_text(json.dumps({'format':'Sponge v3','paste':'Stand at paste_at, //schem load sponge.3 file then //paste -b. Do not use -a for full terrain restoration.','tiles':manifest},indent=2))
 
 def layout(out,biome,surface,paths):
@@ -380,7 +344,7 @@ def layout(out,biome,surface,paths):
         draw.text((x-MIN,z-MIN),b,fill='white',stroke_width=2,stroke_fill='black',font=font,anchor='mm')
     draw.text((626-MIN,622-MIN),'mushroom_fields',fill='white',stroke_width=2,stroke_fill='black',font=font,anchor='mm')
     draw.rectangle((MIN*-1-60,MIN*-1-60,MIN*-1+60,MIN*-1+60),outline='white',width=3)
-    draw.text((752,752),'SAFARI HUB',fill='white',stroke_width=2,stroke_fill='black',font=font,anchor='mm')
+    draw.text((752,752),'CLAREIRA LIVRE',fill='white',stroke_width=2,stroke_fill='black',font=font,anchor='mm')
     draw.text((30,20),'SHIROKAI SAFARI / NORTE ↑ / Minecraft 1.21.1 / 1.500 × 1.500',fill='white',stroke_width=2,stroke_fill='black',font=font)
     im.save(out/'maps/safari_layout.png');im.crop((680,680,824,824)).resize((64,64)).save(out/'world/safari/icon.png')
 

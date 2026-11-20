@@ -36,16 +36,4 @@ def polish(a,routes,passages,surface,levels,origin,ymin,block,out):
                 if not(1<ix<N-1 and 1<iz<N-1):continue
                 if int(a[iy-1,iz,ix]) in allowed and a[iy,iz,ix]==air:
                     a[iy,iz,ix]=torch;cave_lights.append([x+dx,y,z+dz]);break
-    # Replace the long bare plaza grid with gardens and a continuous planted border.
-    grass=block('grass_block');flowers=[block(n) for n in ['allium','oxeye_daisy','cornflower','lily_of_the_valley']];leaf=block('flowering_azalea_leaves[distance=1,persistent=true,waterlogged=false]')
-    for x in range(-58,59):
-        for z in range(-58,59):
-            if abs(x)<7 or abs(z)<7:continue
-            if (-50<=x<=-19 or 18<=x<=50) and -49<=z<=-23:continue
-            if ((x+37)/12)**2+((z-32)/10)**2<1 or ((x-37)/12)**2+((z-32)/10)**2<1:continue
-            ix=x-origin;iz=z-origin;iy=76-ymin
-            if a[iy+1,iz,ix]!=air:continue
-            if (x*x+z*z>46**2 and x*x+z*z<52**2) or (abs(x)>53 or abs(z)>53):
-                a[iy,iz,ix]=grass
-                if (x*7+z*13)%11==0:a[iy+1,iz,ix]=flowers[(x+z)%4]
     (out/'validation/design.json').write_text(json.dumps({'detailed_bridge_posts':len(posts),'bridge_rail_cells':len(rail),'bridge_lanterns':lights,'cave_torches':len(cave_lights),'cave_torch_positions':cave_lights,'ocean_routes':[r['kind'] for r in routes if 'ilha dos cogumelos' in r['kind']]},indent=2))

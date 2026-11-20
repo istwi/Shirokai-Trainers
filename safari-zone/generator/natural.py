@@ -102,10 +102,11 @@ def caves(a,surface,origin,ymin,block,bid,rng):
                 # Wandering centerline with a continuous walkable grade.
                 z+=2.2*math.sin(t*math.pi)*math.sin(x/21)
                 radius=5.5+1.6*math.sin(x/17+z/29)
-                ellipsoid(x,y+3,z,radius,6.0+1.4*math.cos(z/27),radius*.9,kind,entrance)
+                ellipsoid(x,y+3,z,radius,6.0+1.4*math.cos(z/27),radius*.9,kind,entrance,floor_y=None if entrance else y-2)
                 path.append([int(round(x)),int(round(y)),int(round(z))])
         path.append(list(map(int,points[-1])))
-        for x,y,z in path:walkway(x,y,z,kind)
+        if entrance:
+            for x,y,z in path:walkway(x,y,z,kind)
         passages.append({'kind':kind,'points':path,'entrance':entrance});return path
     groups={
       'lush_caves':[(-150,27,185),(-220,26,190),(-255,27,135),(-215,28,95),(-155,26,105),(-115,27,145)],
@@ -130,7 +131,8 @@ def caves(a,surface,origin,ymin,block,bid,rng):
         entries.append({'biome':kind,'entrance':[x,start,z],'staircase':path,'chamber':target})
     # Reapply walking floors after intersections to avoid chambers interrupting their grade.
     for passage in passages:
-        for x,y,z in passage['points']:walkway(x,y,z,passage['kind'])
+        if passage['entrance']:
+            for x,y,z in passage['points']:walkway(x,y,z,passage['kind'])
     # Coherent floor habitats, rather than isolated moss dots on a stone bowl.
     for room in chambers:
         if room['biome']!='lush_caves':continue
@@ -192,7 +194,8 @@ def caves(a,surface,origin,ymin,block,bid,rng):
                     a[level+1:max(level+2,opening+2),iz,ix]=air
     # Finish with free headroom on the continuous walking centerlines.
     for passage in passages:
-        for x,y,z in passage['points']:walkway(x,y,z,passage['kind'])
+        if passage['entrance']:
+            for x,y,z in passage['points']:walkway(x,y,z,passage['kind'])
     # Keep separate floors when a deep tunnel passes beneath an entrance.
     # Collapse only nearby requests, then grade adjacent floors on the same level.
     layers={};heights={};kinds={}
@@ -223,13 +226,17 @@ def caves(a,surface,origin,ymin,block,bid,rng):
     for key,iy in heights.items():
         ix,iz,_=key
         # A graded path is a rock shelf attached to the cave floor, never a thin slab.
-        floor_material=moss if kinds[key]==bid['lush_caves'] else drip
+        floor_material=stone
         j=iy-2
         while j>0 and int(a[j,iz,ix]) in [air,water]:a[j,iz,ix]=stone;j-=1
         a[iy-1,iz,ix]=floor_material
         mark[iy//4,iz//4,ix//4]=kinds[key]
     def corrected(point):
         x,y,z=point;ix=x-origin;iz=z-origin
+        if (ix,iz) not in layers:
+            iy=y-ymin
+            while iy>1 and int(a[iy-1,iz,ix]) in [air,water]:iy-=1
+            return [x,iy+ymin,z]
         layer=min(range(len(layers[(ix,iz)])),key=lambda i:abs(layers[(ix,iz)][i]-(y-ymin)))
         return [x,int(heights[(ix,iz,layer)])+ymin,z]
     for passage in passages:
