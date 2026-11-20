@@ -6,6 +6,7 @@ sys.path.insert(0,str(Path(__file__).parent/'deps'))
 import numpy as np
 from scipy.ndimage import gaussian_filter, zoom
 from PIL import Image, ImageDraw, ImageFont
+import natural
 import nbtlib as n
 from nbtlib import tag as T
 
@@ -52,7 +53,7 @@ def build(out):
         a=rng.normal(size=(math.ceil(SIZE/scale)+3,)*2)
         b=zoom(a,SIZE/a.shape[0],order=3)[:SIZE,:SIZE].astype(np.float32)
         return b/np.std(b)
-    large=noise(130); detail=noise(33); fine=noise(9)
+    large=noise(155); detail=noise(39); fine=noise(10); micro=noise(4); texture=noise(23)
     wx=X+38*np.sin(Z/135)+23*np.sin(X/211)+detail*9; wz=Z+37*np.sin(X/153)+detail*7
     best=np.full((SIZE,SIZE),1e20,np.float32); biome=np.zeros((SIZE,SIZE),np.uint8)
     weights=np.zeros_like(X); heights=np.zeros_like(X)
@@ -60,8 +61,8 @@ def build(out):
         dist=(wx-x)**2+(wz-z)**2
         mask=dist<best; biome[mask]=i; best[mask]=dist[mask]
         w=np.exp(-dist/19000); weights+=w; heights+=w*h
-    surface=heights/np.maximum(weights,1e-20)+large*5+detail*2.5+fine*.6
-    mountain=np.isin(biome,[BID['stony_peaks'],BID['jagged_peaks']]);surface+=mountain*np.maximum(0,detail*11+large*7)
+    surface=heights/np.maximum(weights,1e-20)+large*9+detail*4.2+fine*1.15+micro*.32
+    mountain=np.isin(biome,[BID['stony_peaks'],BID['jagged_peaks']]);surface+=mountain*(np.maximum(0,detail*14+large*9)+np.maximum(0,1-np.abs(fine))**2*7)
     # Ocean shelf and irregular mushroom island.
     ocean=np.isin(biome,[BID['deep_ocean'],BID['warm_ocean']])
     surface[ocean]=np.minimum(surface[ocean],49+detail[ocean]*3)
@@ -83,16 +84,27 @@ def build(out):
     hubr=np.sqrt(X*X+Z*Z); blend=np.clip((hubr-63)/35,0,1)
     surface=76*(1-blend)+surface*blend;biome[hubr<65]=BID['plains']
     surface=np.clip(np.rint(surface),31,221).astype(np.int16)
-    print('Terrain and biome plan prepared',flush=True)
+    surface,lake_levels,lake_records=natural.lakes(surface,biome,texture,rng,BID,MIN)
+    print('Terrain, heterogeneous relief and',len(lake_records),'organic lakes prepared',flush=True)
     # Array order Y,Z,X matches Minecraft section/schematic ordering.
     a=np.memmap(out/'terrain.work',mode='w+',dtype=np.uint8,shape=(HEIGHT,SIZE,SIZE))
     for iy in range(HEIGHT):
         y=iy+YMIN
-        a[iy]=np.where(y<=surface,DEEP if y<0 else STONE,np.where(y<=63,WATER,AIR))
+        a[iy]=np.where(y<=surface,DEEP if y<0 else STONE,np.where((y<=63)|(y<=lake_levels),WATER,AIR))
         if y==YMIN:a[iy]=BED
     top=np.full((SIZE,SIZE),GRASS,np.uint8)
     for names,b in [(['desert','beach'],SAND),(['badlands'],RED),(['swamp','mangrove_swamp'],MUD),(['mushroom_fields'],MYCEL),(['stony_peaks','jagged_peaks'],STONE),(['snowy_taiga','snowy_plains','ice_spikes'],SNOW),(['deep_ocean','warm_ocean','river'],SAND)]:
         top[np.isin(biome,[BID[v] for v in names])]=b
+    # Native ground palettes in irregular patches, with exposed rock on steeper slopes.
+    slope=np.hypot(*np.gradient(surface.astype(np.float32)))
+    forest=np.isin(biome,[BID[b] for b in ['forest','dark_forest','taiga','snowy_taiga','jungle','bamboo_jungle']])
+    top[forest&(texture>.45)]=block('podzol')
+    top[forest&(texture<-.7)]=block('coarse_dirt')
+    top[forest&(fine>1.45)]=block('rooted_dirt')
+    upland=np.isin(biome,[BID[b] for b in ['meadow','cherry_grove','stony_peaks','jagged_peaks']])
+    top[upland&(slope>1.8)&(fine>.05)]=STONE
+    top[upland&(slope>2.6)&(texture>.4)]=block('andesite')
+    wet=surface<lake_levels;top[wet&(texture<0)]=CLAY;top[wet&(texture>=0)]=GRAVEL
     zz,xx=np.indices((SIZE,SIZE)); sy=surface-YMIN
     for depth in range(1,5):a[sy-depth,zz,xx]=np.where(top==SAND,SANDSTONE,np.where(top==RED,TERRA,np.where(top==STONE,STONE,DIRT)))
     a[sy,zz,xx]=top
@@ -101,21 +113,12 @@ def build(out):
     strata=[TERRA,block('orange_terracotta'),block('yellow_terracotta'),block('white_terracotta'),block('red_terracotta')]
     for y in range(50,130):
         mask=bad&(surface>y+4);a[y-YMIN,mask]=strata[(y//4)%len(strata)]
-    # Wide naturally curving subterranean passages, joined by cross galleries.
-    cave_pattern=(np.abs(np.sin(X/68)+.40*np.sin(Z/53))<.29)|(np.abs(np.sin(Z/82)+.35*np.sin(X/63))<.24)
-    cave_pattern&=(edge>30)
-    cave_floor=(17+2*np.sin(X/95)+2*np.sin(Z/83)).astype(np.int16)
-    cave_ceil=(37+3*np.sin(X/77)+2*np.sin(Z/61)).astype(np.int16)
-    for y in range(13,44):
-        mask=cave_pattern&(y>cave_floor)&(y<cave_ceil);a[y-YMIN,mask]=AIR
-    lush=X<0
-    for y in range(13,25):
-        mask=cave_pattern&(cave_floor==y);a[y-YMIN,mask]=np.where(lush[mask],MOSS,DRIP)
-    # A small set of pools in underground chambers.
-    pools=cave_pattern&(np.sin(X/42)+np.cos(Z/39)>1.62)
-    for y in [17,18]:a[y-YMIN,pools&(cave_floor<y)]=WATER
+    cave_marks,cave_entries,cave_passages,cave_chambers=natural.caves(a,surface,MIN,YMIN,block,BID,rng)
     # Freeze surface water in cold habitats.
-    cold=np.isin(biome,[BID[b] for b in ['snowy_taiga','snowy_plains','ice_spikes']]); a[63-YMIN,cold&(surface<63)]=ICEWATER
+    cold=np.isin(biome,[BID[b] for b in ['snowy_taiga','snowy_plains','ice_spikes']])
+    for water_y in np.unique(np.maximum(lake_levels,63)):
+        freeze=cold&(surface<water_y)&(np.maximum(lake_levels,63)==water_y)
+        a[int(water_y)-YMIN,freeze]=ICEWATER
     positions=[];tiles=[]
     def local(x,z):return int(x)-MIN,int(z)-MIN
     def setb(x,y,z,b):
@@ -134,12 +137,13 @@ def build(out):
     # Routes are graded to a max 1-block rise per step and never terminate in water.
     route_mask=np.zeros((SIZE,SIZE),bool);routes=[]
     def route(points,width=5,kind='trilha'):
+        points=natural.astar_route(points,surface,lake_levels,MIN)
         samples=[]
         for (x0,z0),(x1,z1) in zip(points,points[1:]):
             steps=max(abs(x1-x0),abs(z1-z0));length=max(1,math.hypot(x1-x0,z1-z0));amp=min(20,length*.08)
             samples.extend([(round(x0+(x1-x0)*j/max(1,steps)-(z1-z0)/length*amp*math.sin(math.pi*j/max(1,steps))),round(z0+(z1-z0)*j/max(1,steps)+(x1-x0)/length*amp*math.sin(math.pi*j/max(1,steps)))) for j in range(steps)])
-        samples.append(points[-1]); desired=np.array([max(64,ground(x,z)) for x,z in samples],dtype=np.int16)
-        desired[0]=max(64,ground(*samples[0]))
+        samples.append(points[-1]); desired=np.array([max(64,ground(x,z),int(lake_levels[z-MIN,x-MIN])+1) for x,z in samples],dtype=np.int16)
+        desired[0]=desired[0]
         for _ in range(2):
             for i in range(1,len(desired)):desired[i]=min(desired[i],desired[i-1]+1)
             for i in range(len(desired)-2,-1,-1):desired[i]=min(desired[i],desired[i+1]+1)
@@ -149,10 +153,18 @@ def build(out):
                 for dz in range(-r,r+1):
                     ix,iz=local(x+dx,z+dz)
                     if not(1<=ix<SIZE-1 and 1<=iz<SIZE-1):continue
-                    gy=int(surface[iz,ix]);bridge=gy<63
+                    gy=int(surface[iz,ix]);bridge=gy<max(63,int(lake_levels[iz,ix]))
+                    # Rounded, irregular path verges; a three-block walking core stays continuous.
+                    radius=width*.5+.25*math.sin((x+dx)*.8+(z+dz)*.53)
+                    if (dx*dx+dz*dz)>radius*radius and (abs(dx)>1 or abs(dz)>1):continue
                     cub(x+dx,y+1,z+dz,x+dx,y+5,z+dz,AIR)
                     if not bridge and y>gy:cub(x+dx,gy,z+dz,x+dx,y-1,z+dz,DIRT)
-                    setb(x+dx,y,z+dz,PLANK if bridge else PATH)
+                    material=PATH
+                    if not bridge:
+                        rvalue=(math.sin((x+dx)*12.9898+(z+dz)*78.233)*43758.5453)%1
+                        if rvalue<.18:material=block('coarse_dirt')
+                        elif rvalue<.24:material=GRAVEL
+                    setb(x+dx,y,z+dz,PLANK if bridge else material)
                     if bridge and abs(dx)==r and abs(dz)==r:setb(x+dx,y+1,z+dz,FENCE)
                     route_mask[iz,ix]=True
             samples_y=[x,y+1,z];positions.append(samples_y)
@@ -171,83 +183,35 @@ def build(out):
     route([(630,410),(660,510),(590,640),(626,622)],5,'circuito oceanico e ilha')
     # Detour loop, waterfall access and trails to actual cave entrances.
     route([(-390,-70),(-480,90),(-290,210),(0,260),(150,260)],3,'trilha de floresta e pantano')
-    cave_entries=[]
-    for name,x,z in [('lush_caves',-290,130),('dripstone_caves',110,-340)]:
-        route([(0,0),(x,z)],5,'entrada '+name)
-        start=max(64,ground(x,z));path=[]
-        for i,y in enumerate(range(start,21,-1)):
-            cx=x+i;cz=z; cub(cx-2,y,cz-2,cx+2,y+5,cz+2,AIR);cub(cx-2,y-1,cz-2,cx+2,y-1,cz+2,BRICK)
-            path.append([cx,y,cz]);route_mask[z-MIN-3:z-MIN+4,cx-MIN-3:cx-MIN+4]=True
-        endx=x+len(path)-1
-        # Tunnel joins the pre-carved cave grid along X and Z.
-        cub(endx,21,z-2,endx+85,26,z+2,AIR);cub(endx,20,z-2,endx+85,20,z+2,MOSS if name=='lush_caves' else DRIP)
-        for j in range(0,85,18):setb(endx+j,21,z+2,GLOW)
-        sign(x-3,start+1,z,'CAVERNAS|'+name.replace('_',' ')+'|Acesso por escada')
-        cave_entries.append({'biome':name,'entrance':[x,start+1,z],'staircase':path})
+    for cave in cave_entries:
+        x,start,z=cave['entrance'];route([(0,0),(x,z)],3,'entrada '+cave['biome'])
+        sign(x-5,start,z,'CAVERNA NATURAL|'+cave['biome'].replace('_',' ')+'|Entrada sinalizada')
+    for passage in cave_passages:
+        if passage['entrance']:
+            for x,y,z in passage['points']:route_mask[max(0,z-MIN-3):z-MIN+4,max(0,x-MIN-3):x-MIN+4]=True
     # Tree and decoration passes avoid all walking corridors.
     forbidden=route_mask.copy();forbidden|=hubr<67
     from scipy.ndimage import binary_dilation
     forbidden=binary_dilation(forbidden,iterations=4)
     tree_types={b:('oak',OAK) for b in ['forest','flower_forest','plains','meadow','savanna','swamp']}
     tree_types.update({'dark_forest':('dark_oak',DARK),'taiga':('spruce',SPRUCE),'snowy_taiga':('spruce',SPRUCE),'jungle':('jungle',JUNGLE),'bamboo_jungle':('jungle',JUNGLE),'cherry_grove':('cherry',CHERRY),'mangrove_swamp':('mangrove',MANGROVE)})
-    counts={b:0 for b in BIOMES}
-    for iz in range(9,SIZE-9,7):
-        for ix in range(9,SIZE-9,7):
-            ix1=ix+int(rng.integers(-2,3));iz1=iz+int(rng.integers(-2,3));x=MIN+ix1;z=MIN+iz1;y=int(surface[iz1,ix1])+1;b=BIOMES[int(biome[iz1,ix1])]
-            if forbidden[iz1,ix1] or y<65:continue
-            if b in tree_types and rng.random()<({'dark_forest':.85,'jungle':.65,'bamboo_jungle':.45,'forest':.65,'taiga':.65,'snowy_taiga':.6,'flower_forest':.4,'mangrove_swamp':.55,'swamp':.3,'cherry_grove':.55}.get(b,.08)):
-                typ,log=tree_types[b];h=int(rng.integers(5,10))+(6 if typ=='jungle' else 0);r=3 if typ!='jungle' else 4
-                for dy in range(h-3,h+2):
-                    rr=max(1,r-(max(0,dy-h+1)))
-                    for dx in range(-rr,rr+1):
-                        for dz in range(-rr,rr+1):
-                            if dx*dx+dz*dz<=rr*rr+1:setb(x+dx,y+dy,z+dz,LEAVES[typ])
-                cub(x,y,z,x,y+h-1,z,log)
-                if typ=='spruce':
-                    for dy in range(1,h):
-                        rr=max(1,(h-dy)//2)
-                        for dx in range(-rr,rr+1):
-                            for dz in range(-rr,rr+1):
-                                if abs(dx)+abs(dz)<=rr+1 and(dx or dz):setb(x+dx,y+dy,z+dz,LEAVES[typ])
-                if typ=='mangrove':
-                    for dx,dz in [(2,0),(-2,0),(0,2),(0,-2)]:cub(x+dx,y-2,z+dz,x+dx,y+1,z+dz,MANGROVE)
-                if b=='snowy_taiga':setb(x,y+h+2,z,SNOW)
-                counts[b]+=1
-            elif b=='bamboo_jungle':cub(x,y,z,x,y+int(rng.integers(4,12)),z,BAMBOO)
-            elif b=='desert' and rng.random()<.13:cub(x,y,z,x,y+int(rng.integers(1,4)),z,CACTUS)
-            elif b=='ice_spikes' and rng.random()<.28:
-                h=int(rng.integers(6,21));cub(x-1,y,z-1,x+1,y+h-3,z+1,ICE);cub(x,y,z,x,y+h,z,ICE)
-            elif b=='mushroom_fields' and rng.random()<.4:
-                h=int(rng.integers(4,8));cub(x,y,z,x,y+h,z,STEM);cub(x-3,y+h,z-3,x+3,y+h+1,z+3,MUSHROOMS[int(rng.integers(0,2))]);counts[b]+=1
-    for _ in range(550):
+    counts,tree_records=natural.trees(a,surface,biome,forbidden,texture,rng,MIN,YMIN,block,BID)
+    natural.vegetation(a,surface,biome,forbidden,texture,lake_levels,rng,MIN,YMIN,block,BID)
+    # Fallen trunks and mossy boulders use scattered, non-repeating positions.
+    for _ in range(650):
         ix=int(rng.integers(15,SIZE-15));iz=int(rng.integers(15,SIZE-15));x=ix+MIN;z=iz+MIN;y=int(surface[iz,ix])+1
-        if forbidden[iz-5:iz+6,ix-5:ix+6].any() or y<65:continue
+        if forbidden[iz-6:iz+7,ix-6:ix+7].any() or y<=max(63,int(lake_levels[iz,ix])) or a[y-YMIN-1,iz,ix] in [AIR,WATER]:continue
         b=BIOMES[int(biome[iz,ix])]
         if b in tree_types:
-            for dx in range(-3,4):setb(x+dx,y,z,block('oak_log[axis=x]'))
-        elif b not in ['desert','ice_spikes','snowy_plains','beach']:
-            cub(x-1,y,z-1,x+1,y+1,z+1,COBBLE)
-    print('Forests, ice spikes and mushrooms placed',counts,flush=True)
-    for _ in range(100000):
-        ix=int(rng.integers(8,SIZE-8));iz=int(rng.integers(8,SIZE-8));x=MIN+ix;z=MIN+iz;y=int(surface[iz,ix])+1;b=BIOMES[int(biome[iz,ix])]
-        if forbidden[iz,ix]:continue
-        if y>64 and a[y-YMIN,iz,ix]==AIR:
-            if b in ['flower_forest','meadow','cherry_grove']:setb(x,y,z,FLOWERS[int(rng.integers(0,8))])
-            elif b in tree_types:setb(x,y,z,FLOWERS[int(rng.integers(8,10))])
-            elif b in ['desert','badlands'] and rng.random()<.15:setb(x,y,z,DEADBUSH)
-            elif b=='mushroom_fields':setb(x,y,z,SMALLMUSH[int(rng.integers(0,2))])
-        if b in ['warm_ocean','deep_ocean','river'] and y<62:
-            if b=='warm_ocean' and rng.random()<.4:
-                setb(x,y,z,CORALS[int(rng.integers(0,5))]);setb(x,y+1,z,WATER)
-            else:setb(x,y,z,SEAGRASS)
-        if b in ['swamp','mangrove_swamp'] and y<=63 and a[64-YMIN,iz,ix]==AIR:setb(x,64,z,LILY)
-        if cave_pattern[iz,ix]:
-            cy=int(cave_floor[iz,ix])+1
-            if a[cy-YMIN,iz,ix]==AIR:
-                if x<0:
-                    setb(x,cy,z,AZALEA if rng.random()<.3 else SMALLMUSH[1]);setb(x,int(cave_ceil[iz,ix])-1,z,VINE)
-                else:
-                    setb(x,cy,z,DRIPUP);setb(x,int(cave_ceil[iz,ix])-1,z,DRIPDOWN)
+            length=int(rng.integers(3,7))
+            for j in range(length):setb(x+j,y,z,block('oak_log[axis=x]'))
+            setb(x+length//2,y+1,z,MOSS)
+        elif b not in ['desert','ice_spikes','snowy_plains','beach','deep_ocean','warm_ocean']:
+            for dy in range(3):
+                for dx in range(-2,3):
+                    for dz in range(-2,3):
+                        if dx*dx+dz*dz+dy*dy<6:setb(x+dx,y+dy,z+dz,block('mossy_cobblestone') if rng.random()<.5 else STONE)
+    print('Irregular branched trees',sum(counts.values()),'lakes',len(lake_records),'cave chambers',len(cave_chambers),flush=True)
     # Small ruins, shelters and lookouts, all integrated with the path network.
     for b,x,z in [('desert',-300,580),('jungle',540,230),('badlands',-590,440)]:
         y=max(64,ground(x,z));material=SANDSTONE if b=='desert' else BRICK
@@ -304,14 +268,15 @@ def build(out):
     # Two modest waterfalls fed by rock springs in the tropical habitat.
     for x,z in [(490,170),(420,110)]:
         y=ground(x,z);cub(x-3,y,z-3,x+3,y+12,z+3,STONE);cub(x,y+1,z+4,x,y+11,z+4,WATER);cub(x-4,y-1,z+4,x+4,y-1,z+10,CLAY);cub(x-3,y,z+4,x+3,y,z+9,WATER)
+    natural.repair_route_floors(a,routes,surface,lake_levels,MIN,YMIN,block)
     # Biome volume, 4x4x4 voxels. Sections use actual registry names.
     quart=biome[::4,::4].copy();b3=np.broadcast_to(quart,(HEIGHT//4,SIZE//4,SIZE//4)).copy()
-    for iy in range(HEIGHT//4):
-        y=YMIN+iy*4
-        if 8<=y<=44:b3[iy]=np.where(X[::4,::4]<0,BID['lush_caves'],BID['dripstone_caves'])
+    # Apply cave biomes exactly where the carved passages and chambers exist, including entrances.
+    marked=cave_marks>=0;b3[marked]=cave_marks[marked]
     np.savez_compressed(out/'biomes/biome_restore/biomes_4x4x4.npz',biomes=b3,names=np.array(BIOMES),origin=np.array([MIN,YMIN,MIN]))
-    (out/'biomes/routes.json').write_text(json.dumps({'routes':routes,'cave_entrances':cave_entries},ensure_ascii=False))
+    (out/'biomes/routes.json').write_text(json.dumps({'routes':routes,'cave_entrances':cave_entries,'underground_passages':cave_passages},ensure_ascii=False))
     np.save(out/'surface.work.npy',surface)
+    (out/'biomes/natural_features.json').write_text(json.dumps({'revision':2,'trees':tree_records,'lakes':lake_records,'cave_chambers':cave_chambers}))
     print('Hub, routes, caves, shelters and decorations complete',flush=True)
     export_world(out,a,b3,tiles)
     export_schematics(out,a,b3,tiles)
@@ -319,7 +284,7 @@ def build(out):
     coordinates=[]
     for i,b in enumerate(BIOMES):
         if b in ['lush_caves','dripstone_caves']:
-            target=next(c for c in cave_entries if c['biome']==b);sample=target['staircase'][-1];coord=[sample[0],24,sample[2]];area=None
+            target=next(c for c in cave_entries if c['biome']==b);sample=target['chamber'];coord=[sample[0],sample[1]+2,sample[2]];area=None
         else:
             coords=np.argwhere(np.repeat(np.repeat(quart,4,axis=0),4,axis=1)==i);assert len(coords)>0,b
             preferred=np.array([next((s[2] for s in SITES if s[0]==b),coords[len(coords)//2,0]+MIN),next((s[1] for s in SITES if s[0]==b),coords[len(coords)//2,1]+MIN)])-MIN

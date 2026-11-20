@@ -1,6 +1,14 @@
-# Shirokai Safari Zone — Minecraft Java 1.21.1
+# Shirokai Safari Zone V2 — Minecraft Java 1.21.1
 
 Mapa procedural real de 1.500 × 1.500 blocos para uso com Fabric/Cobblemon 1.8.3. Entrega de teste: arquivos gerados e verificados em disco, ainda sem homologação dentro do servidor do operador.
+
+## Revisão visual V2
+
+Esta revisão substitui as árvores cônicas e o espaçamento em grade da V1 por árvores ramificadas, com inclinações, alturas e copas diferentes por espécie. A posição é sorteada e a densidade varia por manchas, deixando clareiras. Acrescenta 27 lagos de contorno irregular, arbustos, grama alta, samambaias, pétalas de cerejeira, solos de podzol/terra infértil/terra enraizada e afloramentos de pedra/andesito. Os caminhos usam rotas que penalizam encostas íngremes e têm mistura de materiais nas bordas.
+
+As cavernas agora têm 12 câmaras conectadas e duas entradas amplas, com passagens sinuosas em três dimensões. A lush cave recebe musgo, argila, azaleias e vinhas com bagas luminosas; a dripstone cave recebe espeleotemas, calcita e pontos de líquen luminoso. Os lagos subterrâneos são escavados abaixo da borda rochosa. Os IDs reais de bioma acompanham o volume escavado, inclusive as entradas elevadas.
+
+A aparência ainda é uma geração procedural personalizada. Os testes dos arquivos e de navegação não substituem inspeção no cliente do Minecraft; não foi feita uma nova captura em jogo da V2 neste ambiente.
 
 ## Conteúdo
 
@@ -15,12 +23,24 @@ Mapa procedural real de 1.500 × 1.500 blocos para uso com Fabric/Cobblemon 1.8.
 
 O retângulo autoral é X/Z=-750..749. Chunks inteiros incluem margem adicional até -752..751. Fora disso, o gerador do mundo standalone produz oceano plano. É preferível conservar esse gerador ao importar o mundo completo, evitando emendas com outro terreno. O hub usa carvalho/abeto, pedra, ciano e branco. Contém recepção, informações, portal com letras em blocos, jardins, lagos, passarelas, bancos, iluminação e espaços sinalizados para NPCs, hologramas e retorno. Esses espaços não executam menus, não contêm NPCs reais e não configuram teleporte automaticamente.
 
+## Atualizar a Safari já instalada no seu Multiworld
+
+O JAR fornecido pelo operador foi identificado como **Multiworld de Isaiah, bundle 1.14.2**, incluindo a implementação para 1.21.1. A V1 já foi carregada no servidor do operador; para atualizar os chunks:
+
+1. Saia da dimensão Safari e pare completamente o servidor.
+2. Faça uma cópia de segurança de `world/dimensions/multiworld/safari/`. Se `level-name` do `server.properties` tiver outro valor, use esse nome no lugar de `world`.
+3. Renomeie a pasta `region` existente para `region-v1-backup`, sem apagá-la.
+4. Copie **somente** a pasta `world/safari/region` deste pacote V2 para `world/dimensions/multiworld/safari/region`. Não misture arquivos region de versões diferentes e não substitua o `level.dat` do mundo principal.
+5. Inicie o servidor e, dentro do jogo como administrador, use `/mw tp safari`, `/tp @s 0 77 0` e, se necessário, `/mw setspawn`.
+
+Isso substitui o terreno e construções existentes na dimensão Safari. NPCs/entidades colocados pelo operador não integram este mapa e podem continuar salvos nas pastas `entities` e em índices de outras mods; verifique suas posições. Não copie nem apague dados de jogadores ou de outras dimensões. Se a dimensão ainda não estiver registrada, crie-a primeiro com `/mw create safari normal`, depois pare o servidor e siga a troca da pasta region.
+
 ## Instalar o mundo e usar Multiworld
 
 1. Use Minecraft Java **1.21.1**, Fabric e Cobblemon **1.8.3**, com suas dependências habituais. Não abra em versão anterior.
 2. Pare o servidor e faça backup do mundo/dimensões existentes.
 3. Extraia o pacote. A pasta que representa o mundo é **`world/safari`**, aquela que contém `level.dat` e `region/`.
-4. Há implementações diferentes de Multiworld no Fabric. A versão exata não foi informada, portanto não há um comando universal seguro de importação. Use o comando de ajuda/documentação do seu Multiworld para **importar um mundo existente** com nome `safari` e tipo Overworld. Aponte para a pasta `safari`, no diretório de mundos exigido por esse mod. Não use um comando de criação que substitua os arquivos existentes.
+4. Há implementações diferentes de Multiworld no Fabric. A instalação do operador usa Isaiah Multiworld 1.14.2; o procedimento acima foi conferido no bytecode do JAR fornecido. Para outra implementação, não presuma o mesmo comando ou diretório. Use o comando de ajuda/documentação do seu Multiworld para **importar um mundo existente** com nome `safari` e tipo Overworld. Aponte para a pasta `safari`, no diretório de mundos exigido por esse mod. Não use um comando de criação que substitua os arquivos existentes.
 5. Se o seu Multiworld só suporta dimensões dentro de um único save: crie primeiro uma dimensão Overworld vazia `safari`; pare o servidor; copie o conteúdo de `world/safari/region/` para a subpasta `region/` da dimensão que ele criou. Não substitua o `level.dat` do mundo principal. Nesse modo o gerador externo e as regras são os da dimensão criada, não os de `level.dat` entregue. Configure a área de exploração dentro do retângulo autoral.
 6. Inicie o servidor, entre no mundo/dimensão `safari` pelo comando documentado no mod e teleporte para `(0,77,0)` nesse mundo. Configure a recepção/retorno com seu sistema de NPCs/menus, se desejar.
 7. Confirme os IDs no debug F3 e faça o roteiro de aceitação abaixo. A importação Multiworld não foi executada neste ambiente.
@@ -62,6 +82,10 @@ python -m venv .venv
 
 No Windows, use `.venv\Scripts\python.exe`. Se a região for uma dimensão que não possui `level.dat`, acrescente `--level-dat /caminho/do/save-principal/level.dat`. Só é aceito DataVersion 3955 (1.21.1). O restaurador suporta chunks zlib, como os entregues; ele recusa outros métodos em vez de sobrescrever dados que não entende. A matriz usa as coordenadas originais; mover ou rotacionar schematics exige transformar a matriz também.
 
+## Prévia técnica opcional
+
+`maps/preview_cerejeiras.png`, quando presente, é uma projeção dos blocos reais do arquivo gerado. Não é screenshot de um cliente Minecraft. O script opcional `generator/voxel_preview.py` requer o JAR oficial do **cliente** 1.21.1 para ler as texturas; esse JAR não é redistribuído. Renderizadores e shaders do servidor/cliente podem apresentar cores e transparências diferentes.
+
 ## Reproduzir a geração
 
 O gerador é executável, não pseudocódigo. Usa apenas blocos vanilla, não cria entidades decorativas nem altera arquivos de spawn do Cobblemon. Reserve 4 GB de RAM livre, 2 GB de disco livre para intermediários e dependências, além de Python 3.11+. No ambiente desta entrega a geração demorou aproximadamente dois minutos; o tempo varia por máquina.
@@ -71,13 +95,13 @@ cd generator
 bash run.sh ../Safari-regenerada
 ```
 
-Para execução manual, instale `requirements.txt`, rode os testes, `generate.py --output DESTINO`, `validate.py DESTINO` e `check_routes.py DESTINO`. Para validar IDs/estados contra registros oficiais de sua própria cópia do Minecraft, `validate.py` aceita `--official-biomes JSON` (lista de nomes) e `--official-blocks JSON` (relatório `blocks.json` do datagen). Os relatórios desta entrega foram gerados com os dados vanilla oficiais do 1.21.1. O JAR proprietário usado para a verificação não é redistribuído.
+Para execução manual, instale `requirements.txt`, rode os testes, `generate.py --output DESTINO`, `validate.py DESTINO` , `check_routes.py DESTINO` e `check_natural.py DESTINO`. Para validar IDs/estados contra registros oficiais de sua própria cópia do Minecraft, `validate.py` aceita `--official-biomes JSON` (lista de nomes) e `--official-blocks JSON` (relatório `blocks.json` do datagen). Os relatórios desta entrega foram gerados com os dados vanilla oficiais do 1.21.1. O JAR proprietário usado para a verificação não é redistribuído.
 
 ## Validação e limites reais
 
 Consulte `validation/validation.json`, `validation/routes.json`, `validation/build.json` e `validation/RELATORIO.md`.
 
-Verificado: 26 IDs reais em todos os chunks; paletas compatíveis com vanilla 1.21.1; leitura dos arquivos Anvil; comparação dos dados de bioma de todas as seções com a matriz fonte; amostras de blocos de todas as seções; comparação integral dos blocos e biomas de todos os 37 schematics com a fonte; conectividade das rotas por busca tridimensional com dois blocos livres de altura e degrau máximo de um bloco. Essa busca cobre os corredores das rotas e escadas, não navegação livre em toda a área, natação nem voo. Não equivale a teste com cliente.
+Verificado: 26 IDs reais em todos os chunks; paletas compatíveis com vanilla 1.21.1; leitura dos arquivos Anvil; comparação dos dados de bioma de todas as seções com a matriz fonte; amostras de blocos de todas as seções; comparação integral dos blocos e biomas de todos os 37 schematics com a fonte; testes de variação das árvores, ausência da grade anterior e água/gelo nos 27 lagos; conectividade das rotas por busca tridimensional com dois blocos livres de altura e degrau máximo de um bloco, incluindo os pontos de visita das 12 câmaras. Essa busca cobre os corredores das rotas e escadas, não navegação livre em toda a área, natação nem voo. Não equivale a teste com cliente.
 
 **Ainda não executado:** abrir o mundo num servidor Minecraft/Cobblemon, importar pelo Multiworld, colar pelo WorldEdit e medir performance/spawns com os datapacks reais. Portanto esta entrega é para homologação, não uma promessa de funcionamento já observado em jogo. Não foram aceitos termos da EULA em nome do operador. Iluminação está marcada para recálculo pelo Minecraft ao carregar os chunks; verifique-a durante a homologação.
 
@@ -87,7 +111,7 @@ Verificado: 26 IDs reais em todos os chunks; paletas compatíveis com vanilla 1.
 - Ir ao hub e a cada ponto de `biome_coordinates.json`; conferir F3 e as condições reais dos biomas de caverna.
 - Percorrer as rotas, pontes, montanhas, acessos subterrâneos e ilha; verificar luz e estabilidade do terreno após atualizações de água/folhagens.
 - Colar uma parte em dimensão descartável com `-b` e comparar blocos, placas e biomas; testar restauração offline nessa cópia.
-- Confirmar que os datapacks do servidor permitem spawns na dimensão `safari`. Bioma sozinho não garante espécie alguma. O mapa oferece superfícies naturais, águas rasas/profundas, trechos escuros e cavernas, mas não altera regras de spawn.
+- Confirmar que os datapacks do servidor permitem spawns na dimensão `safari`. Bioma sozinho não garante espécie alguma. O mapa oferece superfícies naturais variadas, lagos e águas rasas/profundas, trechos escuros e cavernas, mas não altera regras de spawn.
 - Fazer ensaio com jogadores simultâneos, monitorando TPS, memória e tempo de carregamento. Ajustar distâncias de simulação/renderização conforme o servidor. Não há benchmark de multiplayer nesta entrega.
 
 Conserve uma cópia intacta do ZIP para recuperação. Não instale arquivos do gerador como mod e não substitua o JAR de treinadores por este mapa.
