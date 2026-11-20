@@ -194,19 +194,30 @@ def caves(a,surface,origin,ymin,block,bid,rng):
             else:groups[-1].append(value)
         layers[(ix,iz)]=[min(group) for group in groups]
         for layer,group in enumerate(groups):
-            key=(ix,iz,layer);heights[key]=min(group);kinds[key]=requested[min(group)]
+            key=(ix,iz,layer);height=min(group)
+            if height+ymin<50:
+                # Follow the chamber floor instead of projecting an elevated walkway.
+                j=height-1
+                while j>1 and int(a[j,iz,ix]) in [air,water]:j-=1
+                height=j+1
+            heights[key]=height;kinds[key]=requested[min(group)]
     initial=dict(heights);queue=[(h,*key) for key,h in heights.items()];heapq.heapify(queue)
     while queue:
         h,ix,iz,layer=heapq.heappop(queue);key=(ix,iz,layer)
         if heights[key]!=h:continue
         for dx,dz in [(-1,0),(1,0),(0,-1),(0,1)]:
             for other,original in enumerate(layers.get((ix+dx,iz+dz),[])):
-                if abs(original-initial[key])>5:continue
+                if abs(original-layers[(ix,iz)][layer])>5:continue
                 neighbor=(ix+dx,iz+dz,other)
                 if h+1<heights[neighbor]:heights[neighbor]=h+1;heapq.heappush(queue,(h+1,*neighbor))
     for (ix,iz,layer),iy in heights.items():a[iy:iy+4,iz,ix]=air
     for key,iy in heights.items():
-        ix,iz,_=key;a[iy-1,iz,ix]=moss if kinds[key]==bid['lush_caves'] else drip
+        ix,iz,_=key
+        # A graded path is a rock shelf attached to the cave floor, never a thin slab.
+        floor_material=moss if kinds[key]==bid['lush_caves'] else drip
+        j=iy-2
+        while j>0 and int(a[j,iz,ix]) in [air,water]:a[j,iz,ix]=stone;j-=1
+        a[iy-1,iz,ix]=floor_material
         mark[iy//4,iz//4,ix//4]=kinds[key]
     def corrected(point):
         x,y,z=point;ix=x-origin;iz=z-origin
@@ -221,7 +232,7 @@ def caves(a,surface,origin,ymin,block,bid,rng):
     return mark,entries,passages,chambers
 
 
-def trees(a,surface,biome,forbidden,detail,rng,origin,ymin,block,bid):
+def trees(a,surface,biome,forbidden,detail,rng,origin,ymin,block,bid,levels):
     N=surface.shape[0];H=a.shape[0];air=block('air');water=block('water[level=0]')
     species={k:'oak' for k in ['forest','flower_forest','plains','meadow','swamp']}
     species.update({'savanna':'acacia','dark_forest':'dark_oak','taiga':'spruce','snowy_taiga':'spruce','jungle':'jungle','bamboo_jungle':'jungle','cherry_grove':'cherry','mangrove_swamp':'mangrove'})
@@ -246,7 +257,7 @@ def trees(a,surface,biome,forbidden,detail,rng,origin,ymin,block,bid):
         variation=.12*np.sin(xx[None]*1.6+zz[None]*.9+yy*1.3+seed)
         m=distance<1+variation;patch=a[y0:y1,z0:z1,x0:x1]
         empty=(patch==air)|np.isin(patch,list(leafy));patch[m&empty]=leaves[sp]
-    forbidden=binary_dilation(forbidden,iterations=2)
+    forbidden=binary_dilation(forbidden,iterations=2) | binary_dilation(surface<=np.maximum(63,levels),iterations=5)
     for _ in range(105000):
         ix=int(rng.integers(15,N-15));iz=int(rng.integers(15,N-15));name=reverse[int(biome[iz,ix])]
         if name not in species or forbidden[iz,ix] or occupied[iz,ix]:continue

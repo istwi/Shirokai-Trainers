@@ -7,6 +7,7 @@ import numpy as np
 from scipy.ndimage import gaussian_filter, zoom
 from PIL import Image, ImageDraw, ImageFont
 import natural
+import finish
 import nbtlib as n
 from nbtlib import tag as T
 
@@ -66,6 +67,10 @@ def build(out):
     # Ocean shelf and irregular mushroom island.
     ocean=np.isin(biome,[BID['deep_ocean'],BID['warm_ocean']])
     surface[ocean]=np.minimum(surface[ocean],49+detail[ocean]*3)
+    coastal=gaussian_filter(ocean.astype(np.float32),10)
+    softened=gaussian_filter(surface,12)
+    transition=(coastal>.02)&(coastal<.98)
+    surface[transition]=softened[transition]
     island_r=np.sqrt((X-626)**2+(Z-622)**2)
     island=island_r<65+6*np.sin(X/19)+5*np.sin(Z/21)
     surface[island]=68+8*np.maximum(0,1-island_r[island]/70)+detail[island]*1.5
@@ -78,11 +83,12 @@ def build(out):
     # Meandering river connecting all the way to the surrounding ocean.
     river_x=-105+155*np.sin(Z/215)+42*np.sin(Z/83)
     rd=np.abs(X-river_x); river=(rd<9)&(~ocean)&(~island)&(X*X+Z*Z>90**2)
-    bank=(rd<24)&(~ocean)&(~island)&(X*X+Z*Z>90**2)
-    factor=np.clip((rd-7)/17,0,1);surface[bank]=59*(1-factor[bank])+surface[bank]*factor[bank]
+    bank=(rd<95)&(~ocean)&(~island)&(X*X+Z*Z>90**2)
+    factor=np.clip((rd-7)/88,0,1);factor=factor*factor*(3-2*factor);surface[bank]=59*(1-factor[bank])+surface[bank]*factor[bank]
     biome[river]=BID['river'];surface[river]=58+fine[river]*.6
     hubr=np.sqrt(X*X+Z*Z); blend=np.clip((hubr-63)/35,0,1)
     surface=76*(1-blend)+surface*blend;biome[hubr<65]=BID['plains']
+    surface=gaussian_filter(surface,1.3)
     surface=np.clip(np.rint(surface),31,221).astype(np.int16)
     surface,lake_levels,lake_records=natural.lakes(surface,biome,texture,rng,BID,MIN)
     print('Terrain, heterogeneous relief and',len(lake_records),'organic lakes prepared',flush=True)
@@ -195,7 +201,9 @@ def build(out):
     forbidden=binary_dilation(forbidden,iterations=4)
     tree_types={b:('oak',OAK) for b in ['forest','flower_forest','plains','meadow','savanna','swamp']}
     tree_types.update({'dark_forest':('dark_oak',DARK),'taiga':('spruce',SPRUCE),'snowy_taiga':('spruce',SPRUCE),'jungle':('jungle',JUNGLE),'bamboo_jungle':('jungle',JUNGLE),'cherry_grove':('cherry',CHERRY),'mangrove_swamp':('mangrove',MANGROVE)})
-    counts,tree_records=natural.trees(a,surface,biome,forbidden,texture,rng,MIN,YMIN,block,BID)
+    for wx,wz in [(490,170),(420,110)]:
+        forbidden[wz-MIN-16:wz-MIN+17,wx-MIN-16:wx-MIN+17]=True
+    counts,tree_records=natural.trees(a,surface,biome,forbidden,texture,rng,MIN,YMIN,block,BID,lake_levels)
     natural.vegetation(a,surface,biome,forbidden,texture,lake_levels,rng,MIN,YMIN,block,BID)
     # Fallen trunks and mossy boulders use scattered, non-repeating positions.
     for _ in range(650):
@@ -269,6 +277,8 @@ def build(out):
     for x,z in [(490,170),(420,110)]:
         y=ground(x,z);cub(x-3,y,z-3,x+3,y+12,z+3,STONE);cub(x,y+1,z+4,x,y+11,z+4,WATER);cub(x-4,y-1,z+4,x+4,y-1,z+10,CLAY);cub(x-3,y,z+4,x+3,y,z+9,WATER)
     natural.repair_route_floors(a,routes,surface,lake_levels,MIN,YMIN,block)
+    finish.finish(a,routes,surface,lake_levels,MIN,YMIN,block,out)
+    finish.details(a,routes,surface,lake_levels,MIN,YMIN,block,out)
     # Biome volume, 4x4x4 voxels. Sections use actual registry names.
     quart=biome[::4,::4].copy();b3=np.broadcast_to(quart,(HEIGHT//4,SIZE//4,SIZE//4)).copy()
     # Apply cave biomes exactly where the carved passages and chambers exist, including entrances.
@@ -276,7 +286,7 @@ def build(out):
     np.savez_compressed(out/'biomes/biome_restore/biomes_4x4x4.npz',biomes=b3,names=np.array(BIOMES),origin=np.array([MIN,YMIN,MIN]))
     (out/'biomes/routes.json').write_text(json.dumps({'routes':routes,'cave_entrances':cave_entries,'underground_passages':cave_passages},ensure_ascii=False))
     np.save(out/'surface.work.npy',surface)
-    (out/'biomes/natural_features.json').write_text(json.dumps({'revision':2,'trees':tree_records,'lakes':lake_records,'cave_chambers':cave_chambers}))
+    (out/'biomes/natural_features.json').write_text(json.dumps({'revision':3,'trees':tree_records,'lakes':lake_records,'cave_chambers':cave_chambers}))
     print('Hub, routes, caves, shelters and decorations complete',flush=True)
     export_world(out,a,b3,tiles)
     export_schematics(out,a,b3,tiles)
