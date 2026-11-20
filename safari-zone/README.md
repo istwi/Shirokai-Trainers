@@ -1,8 +1,14 @@
-# Shirokai Safari Zone V5 — Minecraft Java 1.21.1
+# Shirokai Safari Zone V6 — Minecraft Java 1.21.1
 
 Mapa procedural real de 1.500 × 1.500 blocos para uso com Fabric/Cobblemon 1.8.3. Entrega de teste: arquivos gerados e verificados em disco, ainda sem homologação dentro do servidor do operador.
 
-## Revisão V5 — sem hub construído e sem trilhas pintadas nas cavernas
+## Revisão V6 — relevo subterrâneo, recifes e habitats costeiros
+
+As descidas são volumes escavados largos com piso contínuo; o piso e a iluminação são reconciliados depois de todos os passes de terreno e decoração. O antigo gerador de degraus estreitos foi desativado. As galerias usam curvas suaves em 3D; as câmaras recebem pilares rochosos ligados ao piso/teto e elevações baixas fora das áreas de circulação. Não há trilhas pintadas nas cavernas. O centro permanece uma clareira livre para construir.
+
+No oceano quente, blocos de coral isolados foram substituídos por colônias ramificadas com leques aquáticos. Na Mushroom Fields foram acrescentados cogumelos pequenos em grupos e novas copas de tamanhos e alturas variados; o relevo da ilha também varia mais. A classificação de praia foi restringida à proximidade do oceano para evitar os antigos campos de areia entre savana e mangue, preservando os IDs reais dos 26 biomas.
+
+## Clareira e integração com o terreno
 
 O centro é uma clareira plana de grama entre X/Z=-60 e 60, com piso em Y=76 e entrada em `(0,77,0)`. Não contém portal, prédios, praça, placas ou decorações de spawn. O relevo se integra ao entorno por uma faixa de transição gradual. Essa é a área disponível para as construções do operador.
 
@@ -32,7 +38,7 @@ O JAR fornecido pelo operador foi identificado como **Multiworld de Isaiah, bund
 1. Saia da dimensão Safari e pare completamente o servidor.
 2. Faça uma cópia de segurança de `world/dimensions/multiworld/safari/`. Se `level-name` do `server.properties` tiver outro valor, use esse nome no lugar de `world`.
 3. Renomeie a pasta `region` existente para `region-v1-backup`, sem apagá-la.
-4. Copie **somente** a pasta `world/safari/region` deste pacote V5 para `world/dimensions/multiworld/safari/region`. Não misture arquivos region de versões diferentes e não substitua o `level.dat` do mundo principal.
+4. Copie **somente** a pasta `world/safari/region` deste pacote V6 para `world/dimensions/multiworld/safari/region`. Não misture arquivos region de versões diferentes e não substitua o `level.dat` do mundo principal.
 5. Inicie o servidor e, dentro do jogo como administrador, use `/mw tp safari`, `/tp @s 0 77 0` e, se necessário, `/mw setspawn`.
 
 Isso substitui o terreno e construções existentes na dimensão Safari. NPCs/entidades colocados pelo operador não integram este mapa e podem continuar salvos nas pastas `entities` e em índices de outras mods; verifique suas posições. Não copie nem apague dados de jogadores ou de outras dimensões. Se a dimensão ainda não estiver registrada, crie-a primeiro com `/mw create safari normal`, depois pare o servidor e siga a troca da pasta region.
@@ -103,7 +109,7 @@ Para execução manual, instale `requirements.txt`, rode os testes, `generate.py
 
 Consulte `validation/validation.json`, `validation/routes.json`, `validation/build.json` e `validation/RELATORIO.md`.
 
-Verificado: 26 IDs reais em todos os chunks; paletas compatíveis com vanilla 1.21.1; leitura dos arquivos Anvil; comparação dos dados de bioma de todas as seções com a matriz fonte; amostras de blocos de todas as seções; comparação integral dos blocos e biomas de todos os 37 schematics com a fonte; testes de variação das árvores, ausência da grade anterior e água/gelo nos 27 lagos; conectividade das rotas por busca tridimensional com dois blocos livres de altura e degrau máximo de um bloco, incluindo os pontos de visita das 12 câmaras. Essa busca cobre os corredores das rotas e escadas, não navegação livre em toda a área, natação nem voo. Não equivale a teste com cliente.
+Verificado: 26 IDs reais em todos os chunks; paletas compatíveis com vanilla 1.21.1; leitura dos arquivos Anvil; comparação dos dados de bioma de todas as seções com a matriz fonte; amostras de blocos de todas as seções; comparação integral dos blocos e biomas de todos os 37 schematics com a fonte; testes de variação das árvores, ausência da grade anterior e água/gelo nos lagos gerados; conectividade das rotas por busca tridimensional com dois blocos livres de altura e degrau máximo de um bloco, incluindo os pontos de visita das 12 câmaras. Essa busca cobre os corredores das rotas e escadas, não navegação livre em toda a área, natação nem voo. Não equivale a teste com cliente.
 
 **Ainda não executado:** abrir o mundo num servidor Minecraft/Cobblemon, importar pelo Multiworld, colar pelo WorldEdit e medir performance/spawns com os datapacks reais. Portanto esta entrega é para homologação, não uma promessa de funcionamento já observado em jogo. Não foram aceitos termos da EULA em nome do operador. Iluminação está marcada para recálculo pelo Minecraft ao carregar os chunks; verifique-a durante a homologação.
 

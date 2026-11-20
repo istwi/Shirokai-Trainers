@@ -73,12 +73,12 @@ def build(out):
     surface[transition]=softened[transition]
     island_r=np.sqrt((X-626)**2+(Z-622)**2)
     island=island_r<65+6*np.sin(X/19)+5*np.sin(Z/21)
-    surface[island]=68+8*np.maximum(0,1-island_r[island]/70)+detail[island]*1.5
+    surface[island]=67+13*np.maximum(0,1-island_r[island]/75)+detail[island]*3.2+fine[island]*.6
     biome[island]=BID['mushroom_fields'];ocean[island]=False
     # Edge shelf joins the flat-ocean generator outside the authored area.
     edge=np.minimum.reduce([X-MIN,Z-MIN,MIN+SIZE-1-X,MIN+SIZE-1-Z]); ew=np.clip(edge/36,0,1)
     surface=33*(1-ew)+surface*ew; biome[edge<20]=BID['deep_ocean'];ocean[edge<20]=True
-    coast=(~ocean)&(~island)&(surface<67.5)&(np.isin(biome,[BID['jungle'],BID['mangrove_swamp'],BID['swamp']]))
+    coast=(~ocean)&(~island)&(coastal>.06)&(coastal<.94)&(surface<67.5)&(np.isin(biome,[BID['jungle'],BID['mangrove_swamp'],BID['swamp']]))
     biome[coast]=BID['beach'];surface[coast]=64+np.maximum(0,surface[coast]-64)*.7
     # Meandering river connecting all the way to the surrounding ocean.
     river_x=-105+155*np.sin(Z/215)+42*np.sin(Z/83)
@@ -142,7 +142,7 @@ def build(out):
         cub(x,y,z,x,y+2,z,FENCE);setb(x,y+3,z,LIGHT);setb(x,y+4,z,SLAB)
     # Routes are graded to a max 1-block rise per step and never terminate in water.
     route_mask=np.zeros((SIZE,SIZE),bool);routes=[]
-    def route(points,width=5,kind='trilha'):
+    def route(points,width=5,kind='trilha',end_foot=None):
         if points[0]==(0,0):
             tx,tz=points[-1];gate=(60 if tx>0 else -60,0) if abs(tx)>abs(tz) else (0,60 if tz>0 else -60)
             points=[(0,0),gate]+natural.astar_route([gate]+points[1:],surface,lake_levels,MIN)[1:]
@@ -152,6 +152,7 @@ def build(out):
             steps=max(abs(x1-x0),abs(z1-z0));length=max(1,math.hypot(x1-x0,z1-z0));amp=0 if max(abs(x0),abs(x1),abs(z0),abs(z1))<=60 else min(12,length*.06)
             samples.extend([(round(x0+(x1-x0)*j/max(1,steps)-(z1-z0)/length*amp*math.sin(math.pi*j/max(1,steps))),round(z0+(z1-z0)*j/max(1,steps)+(x1-x0)/length*amp*math.sin(math.pi*j/max(1,steps)))) for j in range(steps)])
         samples.append(points[-1]); desired=np.array([max(64,ground(x,z),int(lake_levels[z-MIN,x-MIN])+1) for x,z in samples],dtype=np.int16)
+        if end_foot is not None:desired[-1]=end_foot-1
         desired[0]=desired[0]
         for _ in range(2):
             for i in range(1,len(desired)):desired[i]=min(desired[i],desired[i-1]+1)
@@ -191,7 +192,7 @@ def build(out):
     # Detour loop, waterfall access and trails to actual cave entrances.
     route([(-390,-70),(-480,90),(-290,210),(0,260),(150,260)],3,'trilha de floresta e pantano')
     for cave in cave_entries:
-        x,start,z=cave['entrance'];route([(0,0),(x,z)],3,'entrada '+cave['biome'])
+        x,start,z=cave['entrance'];route([(0,0),(x,z)],3,'entrada '+cave['biome'],end_foot=start)
         sign(x-5,start,z,'CAVERNA NATURAL|'+cave['biome'].replace('_',' ')+'|Entrada sinalizada')
     for passage in cave_passages:
         if passage['entrance']:
@@ -241,6 +242,24 @@ def build(out):
     import ecology
     ecology.blend_and_detail(a,surface,lake_levels,biome,texture,MIN,YMIN,block,BIOMES,BID,out,cave_marks,cave_passages)
     tiles=[t for t in tiles if abs(int(t['x']))>60 or abs(int(t['z']))>60]
+    import landforms
+    landforms.enrich(a,surface,biome,cave_chambers,cave_passages,MIN,YMIN,block,BID,out)
+    # Reconcile descent surfaces after all decoration and surface-road operations.
+    import cave_ramps,copy
+    ramp_entries=copy.deepcopy(cave_entries)
+    for entry in ramp_entries:entry['chamber'][1]+=2
+    ramp_field=cave_ramps.apply(a,ramp_entries,cave_passages,MIN,YMIN,block)
+    for passage in cave_passages:
+        if passage['entrance']:
+            for point in passage['points']:
+                x,y,z=point;point[1]=int(ramp_field[z-MIN,x-MIN])+YMIN
+    for entry in cave_entries:
+        for label in ['entrance','chamber']:
+            x,y,z=entry[label];value=int(ramp_field[z-MIN,x-MIN])
+            if value<30000:entry[label][1]=value+YMIN
+    for iy in range(1,220):
+        layer=a[iy];layer[layer==block('torch')]=AIR
+    design.polish(a,routes,cave_passages,surface,lake_levels,MIN,YMIN,block,out)
     # Biome volume, 4x4x4 voxels. Sections use actual registry names.
     quart=biome[::4,::4].copy();b3=np.broadcast_to(quart,(HEIGHT//4,SIZE//4,SIZE//4)).copy()
     # Apply cave biomes exactly where the carved passages and chambers exist, including entrances.
@@ -248,7 +267,7 @@ def build(out):
     np.savez_compressed(out/'biomes/biome_restore/biomes_4x4x4.npz',biomes=b3,names=np.array(BIOMES),origin=np.array([MIN,YMIN,MIN]))
     (out/'biomes/routes.json').write_text(json.dumps({'routes':routes,'cave_entrances':cave_entries,'underground_passages':cave_passages},ensure_ascii=False))
     np.save(out/'surface.work.npy',surface)
-    (out/'biomes/natural_features.json').write_text(json.dumps({'revision':5,'trees':tree_records,'lakes':lake_records,'cave_chambers':cave_chambers}))
+    (out/'biomes/natural_features.json').write_text(json.dumps({'revision':6,'trees':tree_records,'lakes':lake_records,'cave_chambers':cave_chambers}))
     print('Hub, routes, caves, shelters and decorations complete',flush=True)
     export_world(out,a,b3,tiles)
     export_schematics(out,a,b3,tiles)

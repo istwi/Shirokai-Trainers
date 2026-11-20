@@ -89,24 +89,27 @@ def caves(a,surface,origin,ymin,block,bid,rng):
         points=np.nonzero(mask)
         if len(points[0]):mark[(points[0]+y0)//4,(points[1]+z0)//4,(points[2]+x0)//4]=bid[kind]
     def walkway(x,y,z,kind):
+        return  # V6: broad excavated ramps, no separate walking strip
         ix=int(round(x))-origin;iz=int(round(z))-origin;iy=int(round(y))-ymin
         if not(3<ix<N-3 and 3<iz<N-3):return
         for dx in [-1,0,1]:
             for dz in [-1,0,1]:floor_requests.setdefault((ix+dx,iz+dz),{})[iy]=bid[kind]
     def tunnel(points,kind,entrance=False):
-        path=[]
+        from scipy.interpolate import CubicSpline
+        controls=[points[0]]
         for p,q in zip(points,points[1:]):
-            steps=max(1,int(max(abs(q[0]-p[0]),abs(q[2]-p[2]),abs(q[1]-p[1]))))
-            for j in range(steps):
-                t=j/steps;x=p[0]+(q[0]-p[0])*t;z=p[2]+(q[2]-p[2])*t;y=p[1]+(q[1]-p[1])*t
-                # Wandering centerline with a continuous walkable grade.
-                z+=2.2*math.sin(t*math.pi)*math.sin(x/21)
-                radius=5.5+1.6*math.sin(x/17+z/29)
-                ellipsoid(x,y+3,z,radius,6.0+1.4*math.cos(z/27),radius*.9,kind,entrance,floor_y=None if entrance else y-2)
-                path.append([int(round(x)),int(round(y)),int(round(z))])
-        path.append(list(map(int,points[-1])))
-        if entrance:
-            for x,y,z in path:walkway(x,y,z,kind)
+            dx=q[0]-p[0];dz=q[2]-p[2];length=max(1,math.hypot(dx,dz))
+            bend=min(14,length*.14)
+            controls.append(((p[0]+q[0])/2-dz/length*bend,(p[1]+q[1])/2,(p[2]+q[2])/2+dx/length*bend))
+            controls.append(q)
+        controls=np.array(controls,float);distance=np.r_[0,np.cumsum(np.linalg.norm(np.diff(controls,axis=0),axis=1))]
+        curve=CubicSpline(distance,controls,axis=0,bc_type='natural');path=[]
+        for progress in np.arange(0,distance[-1]+.1,.7):
+            x,y,z=curve(min(progress,distance[-1]));radius=7.8+1.1*math.sin(progress/19)
+            ellipsoid(x,y+3,z,radius,7.0+math.cos(progress/23),radius*.92,kind,entrance,floor_y=y-2)
+            p=[int(round(x)),int(round(y-2)),int(round(z))]
+            if not path or p!=path[-1]:path.append(p)
+        path.append([int(points[-1][0]),int(points[-1][1]-2),int(points[-1][2])])
         passages.append({'kind':kind,'points':path,'entrance':entrance});return path
     groups={
       'lush_caves':[(-150,27,185),(-220,26,190),(-255,27,135),(-215,28,95),(-155,26,105),(-115,27,145)],
@@ -133,6 +136,18 @@ def caves(a,surface,origin,ymin,block,bid,rng):
     for passage in passages:
         if passage['entrance']:
             for x,y,z in passage['points']:walkway(x,y,z,passage['kind'])
+    # Merge overlapping voids: remove thin rock membranes between two cavities.
+    # These membranes were leaving false floor steps above another open gallery.
+    membranes=0
+    from scipy.ndimage import binary_dilation
+    for _ in range(3):
+        for iy in range(2,min(H-2,210)):
+            near=np.repeat(np.repeat(mark[iy//4]>=0,4,axis=0),4,axis=1)
+            material=np.isin(a[iy],[stone,block('deepslate'),block('dirt')])
+            gap=near&material&(a[iy-1]==air)
+            single=gap&(a[iy+1]==air)
+            double=gap&np.isin(a[iy+1],[stone,block('deepslate'),block('dirt')])&(a[iy+2]==air)
+            a[iy,single|double]=air;a[iy+1,double]=air;membranes+=int(single.sum()+2*double.sum())
     # Coherent floor habitats, rather than isolated moss dots on a stone bowl.
     for room in chambers:
         if room['biome']!='lush_caves':continue
@@ -231,10 +246,13 @@ def caves(a,surface,origin,ymin,block,bid,rng):
         while j>0 and int(a[j,iz,ix]) in [air,water]:a[j,iz,ix]=stone;j-=1
         a[iy-1,iz,ix]=floor_material
         mark[iy//4,iz//4,ix//4]=kinds[key]
+    import cave_ramps
+    cave_ramps.apply(a,entries,passages,origin,ymin,block)
     def corrected(point):
         x,y,z=point;ix=x-origin;iz=z-origin
         if (ix,iz) not in layers:
             iy=y-ymin
+            while iy<H-2 and int(a[iy,iz,ix]) not in [air,water]:iy+=1
             while iy>1 and int(a[iy-1,iz,ix]) in [air,water]:iy-=1
             return [x,iy+ymin,z]
         layer=min(range(len(layers[(ix,iz)])),key=lambda i:abs(layers[(ix,iz)][i]-(y-ymin)))

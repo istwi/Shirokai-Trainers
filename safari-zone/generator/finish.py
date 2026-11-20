@@ -21,7 +21,8 @@ def finish(a,routes,surface,levels,origin,ymin,block,out):
                         supports.append([x+dx,y-1,z])
             else:
                 for dx in [-2,-1,0,1,2]:
-                    for dz in [-2,-1,0,1,2]:settle_column(a,ix+dx,iz+dz,iy,dirt,air,water)
+                    for dz in [-2,-1,0,1,2]:
+                        if a[iy,iz+dz,ix+dx] not in [air,water]:settle_column(a,ix+dx,iz+dz,iy,dirt,air,water)
     # Mirantes: actual foundations under the four corners, down to rock.
     for x,z in [(-530,-580),(70,-690)]:
         for dx in [7,17]:
@@ -67,7 +68,7 @@ def finish(a,routes,surface,levels,origin,ymin,block,out):
                 side=a[iy:end,iz+dz,ix+dx]
                 if np.any((side!=air)&~np.isin(side,mineral)):attached=True;break
             if not attached:removed+=end-iy;a[iy:end,iz,ix]=air
-    report={'revision':5,'bridge_and_lookout_support_columns':len(supports),'isolated_mineral_blocks_removed':removed,'water_margin_cells':int(shore.sum())}
+    report={'revision':6,'bridge_and_lookout_support_columns':len(supports),'isolated_mineral_blocks_removed':removed,'water_margin_cells':int(shore.sum())}
     (out/'validation/structure_fixes.json').write_text(json.dumps(report,indent=2))
 
 
