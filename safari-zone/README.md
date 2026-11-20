@@ -1,18 +1,24 @@
-# Shirokai Safari Zone V3 — Minecraft Java 1.21.1
+# Shirokai Safari Zone V4 — Minecraft Java 1.21.1
 
 Mapa procedural real de 1.500 × 1.500 blocos para uso com Fabric/Cobblemon 1.8.3. Entrega de teste: arquivos gerados e verificados em disco, ainda sem homologação dentro do servidor do operador.
 
-## Correções de sustentação V3
+## Redesenho V4
+
+A ilha usa uma única rota, com guarda-corpos de abeto, postes de tronco descascado, lanternas e alçapões de acabamento. Foram removidos os grandes tablados isolados da montanha e as duas fontes/cachoeiras retangulares. As quatro saídas principais partem dos eixos do hub. A floresta passa a privilegiar o chão de grama, mantendo manchas de terra e vegetação por habitat. Os troncos caídos são colocados apenas em trechos planos.
+
+As salas das cavernas estão mais próximas, com maior área útil de piso e musgo em manchas contínuas na lush cave. A ligação longa e sem destino entre os dois sistemas foi removida. Foram acrescentadas tochas apoiadas no chão junto das rotas. Os lagos ficam em depressões rasas delimitadas pela borda rochosa, em vez de poços profundos.
+
+## Correções de sustentação V4
 
 Pisos das cavernas acompanham o chão rochoso e recebem preenchimento até o terreno. Os caminhos de terra têm fundação; pontes e mirantes têm pilares. Árvores terrestres são excluídas da água e de uma faixa de cinco blocos ao redor. Margens recebem sedimentos, pedras e cana junto da água; o vale do rio tem transições mais amplas. Essas verificações se somam à navegação: uma rota caminhável sozinha não comprova sustentação nem aparência natural.
 
-## Revisão visual V3
+## Revisão visual V4
 
 Esta revisão substitui as árvores cônicas e o espaçamento em grade da V1 por árvores ramificadas, com inclinações, alturas e copas diferentes por espécie. A posição é sorteada e a densidade varia por manchas, deixando clareiras. Acrescenta 27 lagos de contorno irregular, arbustos, grama alta, samambaias, pétalas de cerejeira, solos de podzol/terra infértil/terra enraizada e afloramentos de pedra/andesito. Os caminhos usam rotas que penalizam encostas íngremes e têm mistura de materiais nas bordas.
 
 As cavernas agora têm 12 câmaras conectadas e duas entradas amplas, com passagens sinuosas em três dimensões. A lush cave recebe musgo, argila, azaleias e vinhas com bagas luminosas; a dripstone cave recebe espeleotemas, calcita e pontos de líquen luminoso. Os lagos subterrâneos são escavados abaixo da borda rochosa. Os IDs reais de bioma acompanham o volume escavado, inclusive as entradas elevadas.
 
-A aparência ainda é uma geração procedural personalizada. Os testes dos arquivos e de navegação não substituem inspeção no cliente do Minecraft; não foi feita uma nova captura em jogo da V3 neste ambiente.
+A aparência ainda é uma geração procedural personalizada. Os testes dos arquivos e de navegação não substituem inspeção no cliente do Minecraft; não foi feita uma nova captura em jogo da V4 neste ambiente.
 
 ## Conteúdo
 
@@ -34,7 +40,7 @@ O JAR fornecido pelo operador foi identificado como **Multiworld de Isaiah, bund
 1. Saia da dimensão Safari e pare completamente o servidor.
 2. Faça uma cópia de segurança de `world/dimensions/multiworld/safari/`. Se `level-name` do `server.properties` tiver outro valor, use esse nome no lugar de `world`.
 3. Renomeie a pasta `region` existente para `region-v1-backup`, sem apagá-la.
-4. Copie **somente** a pasta `world/safari/region` deste pacote V3 para `world/dimensions/multiworld/safari/region`. Não misture arquivos region de versões diferentes e não substitua o `level.dat` do mundo principal.
+4. Copie **somente** a pasta `world/safari/region` deste pacote V4 para `world/dimensions/multiworld/safari/region`. Não misture arquivos region de versões diferentes e não substitua o `level.dat` do mundo principal.
 5. Inicie o servidor e, dentro do jogo como administrador, use `/mw tp safari`, `/tp @s 0 77 0` e, se necessário, `/mw setspawn`.
 
 Isso substitui o terreno e construções existentes na dimensão Safari. NPCs/entidades colocados pelo operador não integram este mapa e podem continuar salvos nas pastas `entities` e em índices de outras mods; verifique suas posições. Não copie nem apague dados de jogadores ou de outras dimensões. Se a dimensão ainda não estiver registrada, crie-a primeiro com `/mw create safari normal`, depois pare o servidor e siga a troca da pasta region.

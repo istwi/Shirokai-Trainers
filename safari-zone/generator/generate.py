@@ -104,9 +104,9 @@ def build(out):
     # Native ground palettes in irregular patches, with exposed rock on steeper slopes.
     slope=np.hypot(*np.gradient(surface.astype(np.float32)))
     forest=np.isin(biome,[BID[b] for b in ['forest','dark_forest','taiga','snowy_taiga','jungle','bamboo_jungle']])
-    top[forest&(texture>.45)]=block('podzol')
-    top[forest&(texture<-.7)]=block('coarse_dirt')
-    top[forest&(fine>1.45)]=block('rooted_dirt')
+    top[np.isin(biome,[BID['taiga'],BID['dark_forest']])&(texture>.8)]=block('podzol')
+    top[forest&(texture>1.5)&(fine>.6)]=block('coarse_dirt')
+    top[forest&(fine>2.1)&(texture>.7)]=block('rooted_dirt')
     upland=np.isin(biome,[BID[b] for b in ['meadow','cherry_grove','stony_peaks','jagged_peaks']])
     top[upland&(slope>1.8)&(fine>.05)]=STONE
     top[upland&(slope>2.6)&(texture>.4)]=block('andesite')
@@ -143,10 +143,13 @@ def build(out):
     # Routes are graded to a max 1-block rise per step and never terminate in water.
     route_mask=np.zeros((SIZE,SIZE),bool);routes=[]
     def route(points,width=5,kind='trilha'):
-        points=natural.astar_route(points,surface,lake_levels,MIN)
+        if points[0]==(0,0):
+            tx,tz=points[-1];gate=(60 if tx>0 else -60,0) if abs(tx)>abs(tz) else (0,60 if tz>0 else -60)
+            points=[(0,0),gate]+natural.astar_route([gate]+points[1:],surface,lake_levels,MIN)[1:]
+        else:points=natural.astar_route(points,surface,lake_levels,MIN)
         samples=[]
         for (x0,z0),(x1,z1) in zip(points,points[1:]):
-            steps=max(abs(x1-x0),abs(z1-z0));length=max(1,math.hypot(x1-x0,z1-z0));amp=min(20,length*.08)
+            steps=max(abs(x1-x0),abs(z1-z0));length=max(1,math.hypot(x1-x0,z1-z0));amp=0 if max(abs(x0),abs(x1),abs(z0),abs(z1))<=60 else min(12,length*.06)
             samples.extend([(round(x0+(x1-x0)*j/max(1,steps)-(z1-z0)/length*amp*math.sin(math.pi*j/max(1,steps))),round(z0+(z1-z0)*j/max(1,steps)+(x1-x0)/length*amp*math.sin(math.pi*j/max(1,steps)))) for j in range(steps)])
         samples.append(points[-1]); desired=np.array([max(64,ground(x,z),int(lake_levels[z-MIN,x-MIN])+1) for x,z in samples],dtype=np.int16)
         desired[0]=desired[0]
@@ -178,15 +181,13 @@ def build(out):
     # A loop and radial routes ensure every surface habitat has a walking connection.
     ring=[(-420,-420),(0,-510),(420,-420),(520,0),(410,380),(0,520),(-460,390),(-520,0),(-420,-420)]
     route(ring,5,'circuito principal')
-    for x,z in ring[:-1]:
+    for x,z in [(-420,0),(0,-510),(420,0),(0,520)]:
         route([(0,0),(int(x*.4)+12,int(z*.4)-10),(x,z)],5,'caminho principal')
     for b,x,z,h in SITES:
-        if x*x+z*z<100**2:continue
+        if x*x+z*z<100**2 or b in ['deep_ocean','warm_ocean']:continue
         nearest=min(routes[0]['points'],key=lambda p:(p[0]-x)**2+(p[2]-z)**2)
         route([(nearest[0],nearest[2]),(x,z)],3,'acesso '+b)
-    route([(410,380),(530,500),(626,622)],5,'ponte ilha dos cogumelos')
-    route([(0,0),(240,170),(630,410)],5,'passarela litoral tropical')
-    route([(630,410),(660,510),(590,640),(626,622)],5,'circuito oceanico e ilha')
+    route([(410,380),(626,622)],5,'ponte unica ilha dos cogumelos')
     # Detour loop, waterfall access and trails to actual cave entrances.
     route([(-390,-70),(-480,90),(-290,210),(0,260),(150,260)],3,'trilha de floresta e pantano')
     for cave in cave_entries:
@@ -212,6 +213,7 @@ def build(out):
         b=BIOMES[int(biome[iz,ix])]
         if b in tree_types:
             length=int(rng.integers(3,7))
+            if np.ptp(surface[iz,ix:ix+length])>0:continue
             for j in range(length):setb(x+j,y,z,block('oak_log[axis=x]'))
             setb(x+length//2,y+1,z,MOSS)
         elif b not in ['desert','ice_spikes','snowy_plains','beach','deep_ocean','warm_ocean']:
@@ -228,9 +230,6 @@ def build(out):
         for dx in range(-8,9):setb(x+dx,y,z-9,material)
     for b,x,z,h in SITES:
         y=max(64,ground(x,z));sign(x-3,y+1,z,b.upper().replace('_',' ')+'|SHIROKAI SAFARI')
-        if 'peaks' in b:
-            cub(x+7,y,z-5,x+17,y,z+5,PLANK)
-            for dz in [-5,5]:cub(x+7,y+1,z+dz,x+17,y+1,z+dz,FENCE)
     # Hub: plaza, ponds, flower gardens, reception and information buildings.
     cub(-59,76,-59,59,76,59,BRICK);cub(-59,77,-59,59,99,59,AIR)
     for v in range(-57,58,12):cub(v,76,-57,v,76,57,PLANK)
@@ -273,12 +272,11 @@ def build(out):
         cub(x-3,77,z-3,x+3,77,z+3,DIRT)
         for dx in range(-2,3):
             for dz in range(-2,3):setb(x+dx,78,z+dz,FLOWERS[(dx+dz)%8])
-    # Two modest waterfalls fed by rock springs in the tropical habitat.
-    for x,z in [(490,170),(420,110)]:
-        y=ground(x,z);cub(x-3,y,z-3,x+3,y+12,z+3,STONE);cub(x,y+1,z+4,x,y+11,z+4,WATER);cub(x-4,y-1,z+4,x+4,y-1,z+10,CLAY);cub(x-3,y,z+4,x+3,y,z+9,WATER)
     natural.repair_route_floors(a,routes,surface,lake_levels,MIN,YMIN,block)
     finish.finish(a,routes,surface,lake_levels,MIN,YMIN,block,out)
     finish.details(a,routes,surface,lake_levels,MIN,YMIN,block,out)
+    import design
+    design.polish(a,routes,cave_passages,surface,lake_levels,MIN,YMIN,block,out)
     # Biome volume, 4x4x4 voxels. Sections use actual registry names.
     quart=biome[::4,::4].copy();b3=np.broadcast_to(quart,(HEIGHT//4,SIZE//4,SIZE//4)).copy()
     # Apply cave biomes exactly where the carved passages and chambers exist, including entrances.
@@ -286,7 +284,7 @@ def build(out):
     np.savez_compressed(out/'biomes/biome_restore/biomes_4x4x4.npz',biomes=b3,names=np.array(BIOMES),origin=np.array([MIN,YMIN,MIN]))
     (out/'biomes/routes.json').write_text(json.dumps({'routes':routes,'cave_entrances':cave_entries,'underground_passages':cave_passages},ensure_ascii=False))
     np.save(out/'surface.work.npy',surface)
-    (out/'biomes/natural_features.json').write_text(json.dumps({'revision':3,'trees':tree_records,'lakes':lake_records,'cave_chambers':cave_chambers}))
+    (out/'biomes/natural_features.json').write_text(json.dumps({'revision':4,'trees':tree_records,'lakes':lake_records,'cave_chambers':cave_chambers}))
     print('Hub, routes, caves, shelters and decorations complete',flush=True)
     export_world(out,a,b3,tiles)
     export_schematics(out,a,b3,tiles)

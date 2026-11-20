@@ -75,13 +75,14 @@ def caves(a,surface,origin,ymin,block,bid,rng):
     water=block('water[level=0]');calcite=block('calcite');tuff=block('tuff');clay=block('clay')
     passages=[];chambers=[]
     floor_requests={}
-    def ellipsoid(x,y,z,rx,ry,rz,kind,exposed=False):
+    def ellipsoid(x,y,z,rx,ry,rz,kind,exposed=False,floor_y=None):
         ix=int(round(x))-origin;iz=int(round(z))-origin;iy=int(round(y))-ymin
         x0=max(0,int(ix-rx-2));x1=min(N,int(ix+rx+3));z0=max(0,int(iz-rz-2));z1=min(N,int(iz+rz+3));y0=max(1,int(iy-ry-2));y1=min(H-1,int(iy+ry+3))
         zz,xx=np.mgrid[z0:z1,x0:x1];yy=np.arange(y0,y1)[:,None,None]+ymin
         r=((xx[None]-ix)/rx)**2+((zz[None]-iz)/rz)**2+((yy-y)/ry)**2
         wobble=.065*np.sin((xx[None]+yy)*.53)+.045*np.cos((zz[None]-yy)*.43)
         mask=r<1+wobble
+        if floor_y is not None:mask &= yy>=floor_y
         if not exposed:mask&=yy<surface[z0:z1,x0:x1][None]-7
         patch=a[y0:y1,z0:z1,x0:x1];patch[mask]=air
         # Mark actual carved quart cells, including the elevated natural entrances.
@@ -107,19 +108,18 @@ def caves(a,surface,origin,ymin,block,bid,rng):
         for x,y,z in path:walkway(x,y,z,kind)
         passages.append({'kind':kind,'points':path,'entrance':entrance});return path
     groups={
-      'lush_caves':[(-150,27,185),(-335,22,220),(-440,25,150),(-360,30,45),(-235,25,-20),(-150,28,90)],
-      'dripstone_caves':[(280,27,-340),(285,25,-285),(360,22,-420),(225,28,-520),(75,24,-440),(30,27,-275)]}
+      'lush_caves':[(-150,27,185),(-220,26,190),(-255,27,135),(-215,28,95),(-155,26,105),(-115,27,145)],
+      'dripstone_caves':[(280,27,-340),(330,27,-310),(375,26,-350),(335,28,-410),(270,26,-415),(235,27,-375)]}
     for kind,rooms in groups.items():
         for x,y,z in rooms:
-            rx=int(rng.integers(22,35));rz=int(rng.integers(20,34));ry=int(rng.integers(14,21))
-            ellipsoid(x,y+5,z,rx,ry,rz,kind);chambers.append({'biome':kind,'center':[x,y+5,z],'radii':[rx,ry,rz]})
+            rx=int(rng.integers(30,41));rz=int(rng.integers(28,39));ry=int(rng.integers(14,21))
+            ellipsoid(x,y+5,z,rx,ry,rz,kind,floor_y=y-2);chambers.append({'biome':kind,'center':[x,y+5,z],'radii':[rx,ry,rz]})
             # Side chambers at varied heights produce branching and overhangs.
             dx=int(rng.integers(-35,36));dz=int(rng.integers(-35,36))
             ellipsoid(x+dx,y+11,z+dz,rx*.55,ry*.6,rz*.55,kind)
             tunnel([(x,y,z),(x+dx,y+3,z+dz)],kind)
         for p,q in zip(rooms,rooms[1:]+rooms[:1]):tunnel([p,q],kind)
         tunnel([rooms[0],rooms[3]],kind)
-    tunnel([(-150,28,90),(-60,23,15),(20,24,-100),(30,27,-275)],'dripstone_caves')
     entries=[]
     for kind,x,z in [('lush_caves',-290,130),('dripstone_caves',110,-340)]:
         start=int(surface[z-origin,x-origin])+1
@@ -131,6 +131,15 @@ def caves(a,surface,origin,ymin,block,bid,rng):
     # Reapply walking floors after intersections to avoid chambers interrupting their grade.
     for passage in passages:
         for x,y,z in passage['points']:walkway(x,y,z,passage['kind'])
+    # Coherent floor habitats, rather than isolated moss dots on a stone bowl.
+    for room in chambers:
+        if room['biome']!='lush_caves':continue
+        x,y,z=room['center'];rx,ry,rz=room['radii'];ix=x-origin;iz=z-origin
+        x0=ix-rx;x1=ix+rx+1;z0=iz-rz;z1=iz+rz+1;low=max(1,y-ry-ymin);high=min(H,y+ry-ymin+1)
+        volume=a[low:high,z0:z1,x0:x1];openmask=volume==air;bottom=openmask.argmax(axis=0)+low
+        zz,xx=np.indices(bottom.shape);mask=openmask.any(axis=0)&(((xx-rx)/rx)**2+((zz-rz)/rz)**2<.88)
+        mask&=(np.sin((xx+x0)*.13)+np.cos((zz+z0)*.11)>-.65)
+        a[bottom[mask]-1,zz[mask]+z0,xx[mask]+x0]=moss
     # Distinct stone surfaces and native cave decorations throughout the carved space.
     palette_ids={name:block(name) for name in ['moss_block','rooted_dirt','clay','calcite','tuff','dripstone_block','glow_lichen[down=false,east=false,north=false,south=false,up=true,waterlogged=false,west=false]','flowering_azalea','azalea','small_dripleaf[facing=north,half=lower,waterlogged=false]']}
     plants=[block('azalea'),block('flowering_azalea'),block('moss_carpet')]
@@ -138,7 +147,7 @@ def caves(a,surface,origin,ymin,block,bid,rng):
     dsup=block('pointed_dripstone[thickness=tip,vertical_direction=up,waterlogged=false]');dsdown=block('pointed_dripstone[thickness=tip,vertical_direction=down,waterlogged=false]')
     for chamber in chambers:
         x,y,z=chamber['center'];rx,ry,rz=chamber['radii'];kind=chamber['biome']
-        for _ in range(950):
+        for _ in range(450):
             xx=x+int(rng.integers(-rx,rx+1));zz=z+int(rng.integers(-rz,rz+1));ix=xx-origin;iz=zz-origin
             column=a[max(0,y-ry-ymin-2):min(H,y+ry-ymin+3),iz,ix];base=max(0,y-ry-ymin-2)
             airspots=np.flatnonzero(column==air)
@@ -382,7 +391,7 @@ def repair_route_floors(a,routes,surface,levels,origin,ymin,block):
         nxt=np.where(valid,np.minimum(field,lower),30000).astype(np.int16)
         if np.array_equal(nxt,field):break
         field=nxt
-    zz,xx=np.indices(field.shape);valid&=((xx+origin)**2+(zz+origin)**2>61**2)
+    zz,xx=np.indices(field.shape);valid&=((np.abs(xx+origin)>60)|(np.abs(zz+origin)>60))
     for iy in np.unique(field[valid]):
         mask=valid&(field==iy);a[iy:iy+3,mask]=block('air')
         deck=surface[mask]<np.maximum(63,levels[mask]);old=a[iy-1,mask].copy()

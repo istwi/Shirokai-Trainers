@@ -16,7 +16,7 @@ for cave in data['cave_entrances']:
 passable=[];solid=[]
 for i,s in enumerate(palette):
     b=s.split('[')[0].split(':')[1]
-    p=b in ['air','short_grass','fern','poppy','dandelion','allium','azure_bluet','oxeye_daisy','cornflower','pink_tulip','lily_of_the_valley','oak_sign','red_mushroom','brown_mushroom','cave_vines','dead_bush','moss_carpet','pink_petals','tall_grass','large_fern','hanging_roots','glow_lichen','spore_blossom']
+    p=b in ['air','short_grass','fern','poppy','dandelion','allium','azure_bluet','oxeye_daisy','cornflower','pink_tulip','lily_of_the_valley','oak_sign','red_mushroom','brown_mushroom','cave_vines','dead_bush','moss_carpet','pink_petals','tall_grass','large_fern','hanging_roots','glow_lichen','spore_blossom','torch','wall_torch']
     passable.append(p);solid.append(not p and b not in ['water','seagrass','kelp','oak_fence','pointed_dripstone','cactus'] and not b.endswith('_leaves'))
 passable=np.array(passable);solid=np.array(solid);nodes=set()
 for iy in range(1,319):
