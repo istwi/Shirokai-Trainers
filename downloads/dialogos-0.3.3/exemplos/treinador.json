@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "treinador",
+  "title": "",
+  "startPage": "inicio",
+  "timeoutSeconds": 120,
+  "pages": [
+    {
+      "id": "inicio",
+      "text": "Olá, %player%! Pronto para um desafio?",
+      "vertical": false,
+      "speaker": "npc",
+      "buttons": [
+        {
+          "id": "batalhar",
+          "label": "Batalhar",
+          "action": "battle",
+          "executor": "player"
+        },
+        {
+          "id": "sair",
+          "label": "Agora não",
+          "action": "close",
+          "executor": "player"
+        }
+      ]
+    }
+  ]
+}

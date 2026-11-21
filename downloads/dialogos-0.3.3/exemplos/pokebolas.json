@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "pokebolas",
+  "title": "&aMercador de Pokébolas",
+  "startPage": "inicio",
+  "timeoutSeconds": 120,
+  "pages": [
+    {
+      "id": "inicio",
+      "text": "Olá, %player%! Procurando Pokébolas?",
+      "vertical": false,
+      "speaker": "npc",
+      "buttons": [
+        {
+          "id": "comprar",
+          "label": "Ver Pokébolas",
+          "action": "command",
+          "command": "zmenu shop loja_pokebolas",
+          "executor": "player"
+        },
+        {
+          "id": "sobre",
+          "label": "Informações",
+          "action": "page",
+          "executor": "player",
+          "page": "informacoes"
+        },
+        {
+          "id": "sair",
+          "label": "Sair",
+          "action": "close",
+          "executor": "player"
+        }
+      ]
+    },
+    {
+      "id": "informacoes",
+      "text": "A loja abre no Zorykai-menu.\nUse o menu da loja para comprar ou vender.",
+      "vertical": false,
+      "speaker": "npc",
+      "buttons": [
+        {
+          "id": "voltar",
+          "label": "Voltar",
+          "action": "page",
+          "executor": "player",
+          "page": "inicio"
+        },
+        {
+          "id": "sair",
+          "label": "Sair",
+          "action": "close",
+          "executor": "player"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "recepcao",
+  "title": "Atendente",
+  "startPage": "jogador",
+  "timeoutSeconds": 120,
+  "pages": [
+    {
+      "id": "jogador",
+      "speaker": "player",
+      "text": "Olá! Gostaria de ver os produtos.",
+      "buttons": [
+        {
+          "id": "continuar",
+          "label": "Continuar",
+          "action": "page",
+          "page": "atendente"
+        }
+      ]
+    },
+    {
+      "id": "atendente",
+      "speaker": "npc",
+      "text": "Bem-vindo, %player%! O que procura?",
+      "buttons": [
+        {
+          "id": "loja",
+          "label": "Comprar / Vender",
+          "action": "command",
+          "executor": "player",
+          "command": "zmenu"
+        },
+        {
+          "id": "sair",
+          "label": "Sair",
+          "action": "close"
+        }
+      ]
+    }
+  ]
+}
