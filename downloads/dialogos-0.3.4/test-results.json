@@ -1,0 +1,31 @@
+{
+  "passed": true,
+  "scenarios": 20,
+  "tcpClients": 1,
+  "humanClients": 0,
+  "zorykaiMenus": "1.1.0",
+  "cobblemon": "1.8.3",
+  "nativeDialoguePackets": 34,
+  "results": [
+    "Legacy NPC still executes its direct player command without opening dialogue",
+    "Real NPC interaction sends native Cobblemon dialogue with personalized text, speaker portrait and three horizontal buttons",
+    "Twelve rapid page changes below 250ms refresh native inputs without locking buttons",
+    "Repeated NPC interactions keep the existing conversation and native input without reopen packets",
+    "A terminal command immediately after page navigation executes once and closes despite repeated input",
+    "Unknown option and forged input nonce do not execute actions",
+    "Page navigation uses a new native input nonce, vertical layout for five options, and disables unauthorized actions",
+    "A forged click on a disabled option cannot execute, even through the native disabled-option callback",
+    "Authorized player command executes once and consumes the conversation before replays",
+    "Permission revoked while the conversation is open is checked again at button use",
+    "Explicit console button runs as console without granting OP to the player",
+    "A player-executor command never gains console privileges",
+    "Moving away invalidates the session before an action can run",
+    "Expired conversation is closed without executing buttons",
+    "Cleanup of an old session does not close another mod native dialogue that replaced it",
+    "Invalid JSON leaves the live configuration intact; successful reload discards stale conversations",
+    "NPC bindings can be edited in JSON and disabling dialogue restores the original direct command",
+    "Native dialogue closes before the real ZorykaiMenus 1.1.0 inventory opens, without closing the inventory afterward",
+    "Close button ends only the conversation",
+    "Battle button delegates to the existing Trainers service and creates a real Cobblemon battle"
+  ]
+}

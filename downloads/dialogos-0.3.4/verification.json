@@ -1,0 +1,12 @@
+{
+  "jar": "shirokai-trainers-0.3.4.jar",
+  "sha256": "bb473b66ed6a3684947a49b260e158d9f44d6554a679df80e3b0fc2f1d188541",
+  "unitTests": 37,
+  "integrationScenarios": 20,
+  "productionJarMatchesIntegrationTest": true,
+  "testFixtureAbsentFromProduction": true,
+  "visualClientTested": false,
+  "productionModified": false,
+  "regressionReproducedOn": "0.3.3",
+  "regressionResult": "Second rapid navigation silently discarded on 0.3.3; all twelve rapid page transitions passed on 0.3.4."
+}
