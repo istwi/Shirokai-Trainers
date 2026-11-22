@@ -1,0 +1,23 @@
+{
+  "jar": "shirokai-trainers-0.3.5.jar",
+  "sha256": "db35878674a9b4a004d1383aef389fde6881141d045e26e45da123ebd162db63",
+  "minecraft": "1.21.1",
+  "cobblemon": "1.8.3",
+  "guardTested": "0.5.3-alpha.1",
+  "guardUpdateRequired": false,
+  "unitTests": 42,
+  "integrationScenarios": 54,
+  "nativeFinalKoWithGuard": {
+    "base": 4,
+    "awarded": 8
+  },
+  "nativeFinalKoWithoutGuard": {
+    "base": 4,
+    "awarded": 4
+  },
+  "productionJarMatchesAllIntegrationRuns": true,
+  "testFixtureAbsentFromProduction": true,
+  "visualClientTested": false,
+  "productionServerModified": false,
+  "nativeDialoguesUnchangedFrom": "0.3.4"
+}

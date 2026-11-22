@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "guard": true,
+  "scenarios": 17,
+  "realFinalKo": {
+    "base": 4,
+    "awarded": 8
+  },
+  "tcpClients": 1,
+  "humanClients": 0,
+  "results": [
+    "Both actual NPC and player inside the Guard region: native Pokemon.addExperience awards 200 from 100",
+    "Command and candy experience sources receive no regional multiplier",
+    "A Pokemon without the battle player owner receives no bonus",
+    "Reload preserves the original battle snapshot and applies the new multiplier only to subsequent battles",
+    "NPC outside and player inside receives normal experience",
+    "Player and NPC outside the region receive normal experience",
+    "Remote trainer battle without an actual NPC origin receives normal experience",
+    "Different dimension receives normal experience",
+    "Trainer filter mismatch receives normal experience",
+    "Feature disabled receives normal experience",
+    "Missing Guard region receives normal experience",
+    "Overlapping regions select the highest multiplier and never stack",
+    "Fractional multiplier uses the configured native integer experience",
+    "Negative fractional coordinates are floored and do not cross the Guard block boundary",
+    "Invalid region configuration is rejected without replacing the live configuration or battle snapshot",
+    "Real Showdown battle finishes with a final knockout and the native awarded XP matches the regional multiplier",
+    "Inventory remains unchanged and player never receives OP"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "enabled": true,
+  "regions": [
+    {
+      "region": "farm_xp",
+      "dimension": "minecraft:overworld",
+      "multiplier": 2.0,
+      "enabled": true,
+      "trainers": []
+    }
+  ]
+}
