@@ -131,22 +131,29 @@ def build(theme):
  for x in [25,30]:box(x,7,18,x,10,18,log)
  box(25,11,16,31,11,19,plank)
  for x in [25,30]:lamp(x,10,18,True)
- # Low long gable on right wing, high perpendicular gable on left.
+ # Join both roof volumes by their highest surface. Shallow roof: stair +
+ # top slab per one-block rise, always facing uphill. Closed backing prevents
+ # gaps at shallow steps and at the intersection of the two gables.
  rs=STAIRS[roof]
  snow=biome in ['snowy_taiga','snowy_plains','ice_spikes','jagged_peaks']
- roofs=[]
+ roofs=[];roof_columns=[]
  for z in range(5,26):
-  y=13+min(z-5,25-z)//2;face='north' if z<15 else 'south'
-  for x in range(14,27):
-   put(x,y,z,rs+'_stairs[facing='+face+',half=bottom,shape=straight,waterlogged=false]');roofs.append((x,y,z))
-   if x==26:put(x,y-1,z,plank)
- for x in range(2,17):
-  y=13+min(x-2,16-x);face='east' if x<9 else 'west'
-  for z in range(5,26):
-   put(x,y,z,rs+'_stairs[facing='+face+',half=bottom,shape=straight,waterlogged=false]');roofs.append((x,y,z))
-   if x in [2,16] or z in [5,25]:put(x,y,z,wood+'_stairs[facing='+face+',half=bottom,shape=straight,waterlogged=false]')
-  for yy in range(13,y):
-   for z in [7,23]:put(x,yy,z,wall)
+  dist=min(z-5,25-z)
+  for x in range(2,27):
+   left=13+min(x-2,16-x) if x<=16 else -1
+   right=13+dist//2 if x>=14 else -1
+   y=max(left,right);is_left=left>=right
+   if is_left:
+    material=wood if x in [2,16] or z in [5,25] else rs
+    if x==9:cover=plank if material==wood else roof
+    else:cover=material+'_stairs[facing='+('east' if x<9 else 'west')+',half=bottom,shape=straight,waterlogged=false]'
+   else:
+    material=wood if x==26 else rs
+    if z==15:cover=plank if material==wood else roof
+    elif dist%2:cover=material+'_slab[type=top,waterlogged=false]'
+    else:cover=material+'_stairs[facing='+('south' if z<15 else 'north')+',half=bottom,shape=straight,waterlogged=false]'
+   box(x,12,z,x,y-1,z,roof)
+   put(x,y,z,cover);roofs.append((x,y,z));roof_columns.append((x,y,z))
  # Front gable frame / loft window.
  box(9,13,23,9,18,23,log)
  for x in [7,8,10,11]:
@@ -201,6 +208,35 @@ def build(theme):
   for x in [4,12]:put(x,7,25,'red_mushroom');put(x,6,25,'mycelium')
  if biome in ['dripstone_caves','lush_caves']:
   for x in [4,23]:put(x,0,28,accent);put(x,1,28,flora)
+ # Check the assembled roof, not just traversable floors.
+ def audit_roof():
+  checked=0
+  for x,y,z in roof_columns:
+   for yy in range(12,y+1):
+    assert get(x,yy,z)!='minecraft:air',(biome,'roof aperture',x,yy,z)
+   checked+=1
+  for z in range(5,26):
+   y=13+min(z-5,25-z)//2;state=get(26,y,z)
+   if z==15:assert state=='minecraft:'+plank,state
+   elif min(z-5,25-z)%2:assert '_slab[type=top,' in state,state
+   else:assert 'facing='+('south' if z<15 else 'north') in state,state
+  for i in range(6):
+   for x in range(27,30):
+    state=get(x,i,24-i)
+    assert '_stairs[facing=north,half=bottom,shape=straight,' in state,state
+  return checked
+ roof_checked=audit_roof()
+ # Regression: original reversed roof stairs must be rejected.
+ saved=int(a[14-Y0,7,26]);put(26,14,7,wood+'_stairs[facing=north,half=bottom,shape=straight,waterlogged=false]')
+ try:audit_roof()
+ except AssertionError:pass
+ else:raise AssertionError('reversed roof stairs not detected')
+ a[14-Y0,7,26]=saved
+ saved=int(a[13-Y0,7,20]);put(20,13,7,'air')
+ try:audit_roof()
+ except AssertionError:pass
+ else:raise AssertionError('roof opening not detected')
+ a[13-Y0,7,20]=saved
  # All container block entities explicitly encoded, empty by design.
  for i,s in enumerate(pal):
   if any(s.startswith('minecraft:'+k) for k in ['barrel[','flower_pot']):
@@ -238,7 +274,7 @@ def build(theme):
    delta=1 if 'hanging=true' in s else -1
    assert int(a[yy+delta,z,x])!=0,(biome,'unsupported light',x,yy,z)
    lamps+=1
- report={'biome':biome,'passed':True,'size':[W,H,D],'offset':[0,-4,0],'verified_blocks':int(a.size),'official_states_checked':registry is not None,'reachable_points':points,'supported_lanterns':lamps,'door_assumption':'doors openable, voxel navigation uses one-block steps; stairs models not simulated','runtime_minecraft_test':False}
+ report={'biome':biome,'passed':True,'size':[W,H,D],'offset':[0,-4,0],'verified_blocks':int(a.size),'official_states_checked':registry is not None,'reachable_points':points,'supported_lanterns':lamps,'revision':2,'closed_roof_columns':roof_checked,'roof_orientation_and_half_slab_profiles_checked':True,'reversed_stair_and_gap_regressions_rejected':True,'door_assumption':'doors openable, voxel navigation uses one-block steps; stairs models not simulated','runtime_minecraft_test':False}
  (root/'validation.json').write_text(json.dumps(report,indent=2));(root/'palette.json').write_text(json.dumps(pal,indent=2));np.save(root/'blocks.npy',a)
  return report
 reports=[]

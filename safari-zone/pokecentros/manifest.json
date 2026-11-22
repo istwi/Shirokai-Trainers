@@ -67,6 +67,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -133,6 +137,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -199,6 +207,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -265,6 +277,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -331,6 +347,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -397,6 +417,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -463,6 +487,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -529,6 +557,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -595,6 +627,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -661,6 +697,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -727,6 +767,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -793,6 +837,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -859,6 +907,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -925,6 +977,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -991,6 +1047,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -1057,6 +1117,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -1123,6 +1187,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -1189,6 +1257,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -1255,6 +1327,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -1321,6 +1397,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -1387,6 +1467,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -1453,6 +1537,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -1519,6 +1607,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -1585,6 +1677,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -1651,6 +1747,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     },
@@ -1717,6 +1817,10 @@
         ]
       },
       "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
       "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
       "runtime_minecraft_test": false
     }

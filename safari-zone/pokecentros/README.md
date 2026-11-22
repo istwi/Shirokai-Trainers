@@ -1,10 +1,14 @@
-# Pokécentros Safari — coleção de 26 biomas
+# Pokécentros Safari V2 — coleção de 26 biomas
 
 26 construções independentes para Minecraft Java 1.21.1, seguindo a referência aprovada: dois andares, base de pedra, estrutura de troncos, janelas altas, telhado assimétrico, varanda frontal, escada externa na direita e emblema de Pokébola. Cada versão varia madeiras, alvenaria, telhado, plantas e detalhes do habitat. Inclui balcão de recepção, espaços de cura e sala superior mobiliada. Não é um hub e não substitui o mapa V6.
 
 ## Conteúdo
 
-Cada pasta de bioma contém o schematic Sponge v3, prévia técnica, relatório de acesso, paleta e matriz dos blocos. O catálogo mostra seis exemplos reais da coleção. Todos os 26 schematics estão prontos para colocar separadamente pelo mapa; nenhum foi instalado automaticamente na dimensão.
+O ZIP V2 contém somente os 26 arquivos `.schem`, diretamente na raiz. O arquivo com o nome anterior também foi atualizado para este conteúdo corrigido. Código, catálogo e relatórios ficam disponíveis separadamente neste diretório do repositório.
+
+Corrigido: escadas do telhado orientadas para cima da inclinação; encaixe de escadas e lajes no lado de menor inclinação; fechamento contínuo e união entre os dois telhados. A escada lateral foi conferida. Os testes também rejeitam explicitamente a orientação invertida e a reintrodução de uma fresta.
+
+A pasta `schematics/` contém os 26 arquivos Sponge v3. O `manifest.json` registra os resultados dos testes e posições locais de acesso de cada variante. O catálogo mostra seis exemplos reais da coleção. Todos os 26 schematics estão prontos para colocar separadamente pelo mapa; nenhum foi instalado automaticamente na dimensão.
 
 Os espaços de cura e as camas são mobiliário visual de blocos vanilla. Máquinas funcionais do Cobblemon, NPCs, diálogos, comércio e teleporte precisam ser configurados com os mods/sistemas do seu servidor. Não existem NPCs ou serviços funcionais embutidos. As marcações de recepcionista/pesquisador no manifest indicam posições livres para configuração.
 
@@ -29,7 +33,7 @@ Use as versões oceânicas em margem, ilha ou plataforma adequada; não são bas
 
 ## Verificação
 
-Os 26 arquivos foram relidos e seus 772.200 blocos comparados integralmente à fonte. Os estados foram conferidos contra o registro oficial vanilla 1.21.1. A navegação em voxels verificou chegada, recepção, duas áreas de cura, varanda, sala superior, espaço do pesquisador e início/fim da escada. Portas são tratadas como abríveis e a busca admite degrau de um bloco; não é simulação da física exata de escadas, cercas ou jogadores. As lanternas têm blocos de apoio.
+Os 26 arquivos foram relidos e seus 772.200 blocos comparados integralmente à fonte. Os estados foram conferidos contra o registro oficial vanilla 1.21.1. A navegação em voxels verificou chegada, recepção, duas áreas de cura, varanda, sala superior, espaço do pesquisador e início/fim da escada. Portas são tratadas como abríveis e a busca admite degrau de um bloco; não é simulação da física exata de escadas, cercas ou jogadores. As lanternas têm blocos de apoio. Na V2 foram verificadas 525 colunas de fechamento do telhado por variante, a orientação de cada fileira da ala direita, as lajes de transição e os 18 degraus da escada lateral.
 
 As prévias são projeções técnicas dos blocos realmente gerados, com texturas e formas simplificadas. Não representam screenshots do jogo ou garantem o aspecto exato com shaders. Ainda não houve carregamento destes schematics no cliente Minecraft nem colagem real pelo WorldEdit.
 
