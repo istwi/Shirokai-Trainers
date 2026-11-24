@@ -1,0 +1,133 @@
+{
+  "paste_at": [
+    -56,
+    70,
+    -56
+  ],
+  "size": [
+    112,
+    48,
+    112
+  ],
+  "spawn": [
+    0,
+    77,
+    0
+  ],
+  "buildings": [
+    {
+      "name": "Recepcao / guia Safari",
+      "center": [
+        -29,
+        -29
+      ],
+      "entry": [
+        -29,
+        77,
+        -18
+      ]
+    },
+    {
+      "name": "Centro de cuidado",
+      "center": [
+        26,
+        -30
+      ],
+      "entry": [
+        26,
+        77,
+        -19
+      ]
+    },
+    {
+      "name": "Pesquisador / missoes",
+      "center": [
+        -32,
+        27
+      ],
+      "entry": [
+        -32,
+        77,
+        16
+      ]
+    },
+    {
+      "name": "Loja / trocas",
+      "center": [
+        28,
+        34
+      ],
+      "entry": [
+        28,
+        77,
+        23
+      ]
+    }
+  ],
+  "npc_locations": [
+    {
+      "role": "Recepcao / guia Safari",
+      "position": [
+        -29,
+        77,
+        -32
+      ]
+    },
+    {
+      "role": "Centro de cuidado",
+      "position": [
+        26,
+        77,
+        -33
+      ]
+    },
+    {
+      "role": "Pesquisador / missoes",
+      "position": [
+        -32,
+        77,
+        30
+      ]
+    },
+    {
+      "role": "Loja / trocas",
+      "position": [
+        28,
+        77,
+        37
+      ]
+    },
+    {
+      "role": "Mercador / servico opcional",
+      "position": [
+        -19,
+        77,
+        -15
+      ]
+    },
+    {
+      "role": "Mercador / servico opcional",
+      "position": [
+        -15,
+        77,
+        -15
+      ]
+    },
+    {
+      "role": "Mercador / servico opcional",
+      "position": [
+        -20,
+        77,
+        11
+      ]
+    },
+    {
+      "role": "Mercador / servico opcional",
+      "position": [
+        -16,
+        77,
+        11
+      ]
+    }
+  ]
+}

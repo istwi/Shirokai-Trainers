@@ -1,0 +1,1828 @@
+{
+  "format": "Sponge v3",
+  "minecraft": "1.21.1",
+  "reference": "two stories, timber frame, stone base, tall windows, front balcony, right exterior staircase",
+  "functional_services_installed": false,
+  "centers": [
+    {
+      "biome": "plains",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "forest",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "flower_forest",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "dark_forest",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "bamboo_jungle",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "jungle",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "taiga",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "cherry_grove",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "snowy_taiga",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "meadow",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "savanna",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "snowy_plains",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "ice_spikes",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "stony_peaks",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "jagged_peaks",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "desert",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "badlands",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "swamp",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "mangrove_swamp",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "deep_ocean",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "warm_ocean",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "river",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "beach",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "mushroom_fields",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "dripstone_caves",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    },
+    {
+      "biome": "lush_caves",
+      "passed": true,
+      "size": [
+        33,
+        30,
+        30
+      ],
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "verified_blocks": 29700,
+      "official_states_checked": true,
+      "reachable_points": {
+        "entrada": [
+          18,
+          1,
+          24
+        ],
+        "recepcionista": [
+          18,
+          1,
+          10
+        ],
+        "cura_1": [
+          7,
+          1,
+          11
+        ],
+        "cura_2": [
+          10,
+          1,
+          11
+        ],
+        "varanda": [
+          18,
+          7,
+          25
+        ],
+        "sala_superior": [
+          18,
+          7,
+          19
+        ],
+        "pesquisador": [
+          18,
+          7,
+          13
+        ],
+        "topo_escada": [
+          28,
+          7,
+          18
+        ],
+        "base_escada": [
+          28,
+          1,
+          25
+        ]
+      },
+      "supported_lanterns": 12,
+      "revision": 2,
+      "closed_roof_columns": 525,
+      "roof_orientation_and_half_slab_profiles_checked": true,
+      "reversed_stair_and_gap_regressions_rejected": true,
+      "door_assumption": "doors openable, voxel navigation uses one-block steps; stairs models not simulated",
+      "runtime_minecraft_test": false
+    }
+  ]
+}

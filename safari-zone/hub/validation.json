@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "npc_spaces": 8,
+  "buildings": 4,
+  "all_npcs_reachable": true,
+  "four_edge_connections": true,
+  "schematic_blocks_roundtrip": 602112,
+  "block_states_checked_against_official_registry": true,
+  "minecraft_client_inspection": false,
+  "supported_lanterns": 20,
+  "no_grass_lake_beds": true
+}
